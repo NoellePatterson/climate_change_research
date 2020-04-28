@@ -14,7 +14,7 @@ import csv
 from datetime import date, timedelta
 
 # #open up nc files
-# nc_files = glob.glob('runoff_grids/*.nc')
+# nc_files = glob.glob('data_inputs/runoff_grids/*.nc')
 # for nc_data in nc_files:
 #     dataset = xr.open_dataset(nc_data)
 #     runoff = dataset['runoff']
@@ -62,7 +62,7 @@ from datetime import date, timedelta
 
 # Add date and flow columns to FFC data, foldered by class
 
-folders = glob.glob('FFC_update_POR/*')
+folders = glob.glob('data_inputs/FFC_update_POR/*')
 for folder in folders:
     files = glob.glob(folder+'/*.csv')
     for file in files:

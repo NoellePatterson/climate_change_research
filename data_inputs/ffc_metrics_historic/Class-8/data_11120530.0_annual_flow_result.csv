@@ -1,0 +1,25 @@
+Year, 1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991
+FA_Mag,None,None,None,None,None,None,None,None,None,None,12.906961164295012,1.2633179055858865,None,None,None,None,None,None,None,None,None
+FA_Tim,None,None,None,None,None,None,None,None,None,None,64,27,None,None,None,None,None,None,None,None,None
+FA_Dur,None,None,None,None,None,None,None,None,None,None,8,5,None,None,None,None,None,None,None,None,None
+Wet_BFL_Mag_10,0.2,0.18,None,None,None,None,None,None,None,None,0.432,0.26,None,None,None,None,None,0.15,0.09,0.05,0.03
+Wet_BFL_Mag_50,0.5,0.4,None,None,None,None,None,None,None,None,0.51,0.365,None,None,None,None,None,0.27,0.21,0.06,0.31
+Wet_Tim,48,71,None,None,None,None,None,None,None,None,106,74,None,None,None,None,None,8,59,75,145
+Wet_BFL_Dur,127,127,None,None,None,None,None,None,None,None,53,122,None,None,None,None,None,197,97,68,29
+Peak_2,31.0,31.0,None,None,None,None,None,None,None,None,31.0,31.0,None,None,None,None,None,31.0,31.0,31.0,31.0
+Peak_5,138.80000000000004,138.80000000000004,None,None,None,None,None,None,None,None,138.80000000000004,138.80000000000004,None,None,None,None,None,138.80000000000004,138.80000000000004,138.80000000000004,138.80000000000004
+Peak_10,223.20000000000002,223.20000000000002,None,None,None,None,None,None,None,None,223.20000000000002,223.20000000000002,None,None,None,None,None,223.20000000000002,223.20000000000002,223.20000000000002,223.20000000000002
+Peak_Dur_2,None,1,None,None,None,None,None,None,None,None,4,1,None,None,None,None,None,None,None,None,4
+Peak_Dur_5,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,1
+Peak_Dur_10,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+Peak_Fre_2,None,1,None,None,None,None,None,None,None,None,2,1,None,None,None,None,None,None,None,None,2
+Peak_Fre_5,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,1
+Peak_Fre_10,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
+SP_Mag,0.5,7.4,None,None,None,None,None,None,None,None,80.0,31.0,None,None,None,None,None,14.0,0.88,6.8,100.0
+SP_Tim,175,198,None,None,None,None,None,None,None,None,159,196,None,None,None,None,None,205,156,143,174
+SP_Dur,123,39,None,None,None,None,None,None,None,None,168,137,None,None,None,None,None,121,187,194,16
+SP_ROC,0.19999999999999996,0.3571428571428572,None,None,None,None,None,None,None,None,0.13779661016949152,0.08219178082191773,None,None,None,None,None,0.09838709677419347,0.1666666666666666,0.25000000000000006,0.24798619102416572
+DS_Mag_50,0.2,None,None,None,None,None,None,None,None,None,0.2,None,None,None,None,None,None,0.09,0.05,0.03,0.12
+DS_Mag_90,0.25,None,None,None,None,None,None,None,None,None,0.3459999999999999,None,None,None,None,None,None,0.12200000000000003,0.08,0.06,0.38
+DS_Tim,298,237,None,None,None,None,None,None,None,None,327,333,None,None,None,None,None,326,343,337,190
+DS_Dur_WS,139,None,None,None,None,None,None,None,None,None,113,None,None,None,None,None,None,99,98,174,321

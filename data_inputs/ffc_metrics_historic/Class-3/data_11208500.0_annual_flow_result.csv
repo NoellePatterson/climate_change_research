@@ -1,0 +1,25 @@
+Year, 1968,1969,1970,1971,1972,1973
+FA_Mag,None,None,None,None,None,None
+FA_Tim,None,None,None,None,None,None
+FA_Dur,None,None,None,None,None,None
+Wet_BFL_Mag_10,None,0.312,0.196,None,None,0.13
+Wet_BFL_Mag_50,None,10.0,0.64,None,None,2.0
+Wet_Tim,None,102,81,None,None,97
+Wet_BFL_Dur,None,53,80,None,None,85
+Peak_2,7.375,7.375,7.375,7.375,7.375,7.375
+Peak_5,31.0,31.0,31.0,31.0,31.0,31.0
+Peak_10,53.0,53.0,53.0,53.0,53.0,53.0
+Peak_Dur_2,None,66,2,None,None,3
+Peak_Dur_5,None,5,1,None,None,None
+Peak_Dur_10,None,1,None,None,None,None
+Peak_Fre_2,None,4,1,None,None,2
+Peak_Fre_5,None,3,1,None,None,None
+Peak_Fre_10,None,1,None,None,None,None
+SP_Mag,None,22.0,2.1,None,None,6.2
+SP_Tim,None,155,161,None,None,182
+SP_Dur,None,150,166,None,None,100
+SP_ROC,None,0.0638370118845501,0.125,None,None,0.07894736842105259
+DS_Mag_50,None,0.065,None,None,None,0.0
+DS_Mag_90,None,0.2,None,None,None,0.02
+DS_Tim,None,305,327,None,None,282
+DS_Dur_WS,None,142,None,None,None,181
