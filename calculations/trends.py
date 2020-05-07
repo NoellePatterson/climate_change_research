@@ -46,12 +46,20 @@ def calc_mk_trend(ffc_data, results_dicts):
                             # only record slope value if mk result is significant up or down trend
                             if mk_stats.trend != 'no trend':
                                 results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope   
+                                # correct for an occasional error in which a slope of 0 is considered significant by the MK statistic
+                                if mk_stats.slope == 0:
+                                    results_dicts[gage_index]['results'].loc[value, 'mk_decision'] == 'no trend'
+                                    results_dicts[gage_index]['results'].loc[value, 'sen_slope'] == np.nan
                             break
             else: 
                 results_dicts[gage_index]['results'].loc[value, 'mk_decision'] = mk_stats.trend
                 # only record slope value if mk result is significant up or down trend
                 if mk_stats.trend != 'no trend':
-                    results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope     
+                    results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope 
+                    # correct for an occasional error in which a slope of 0 is considered significant by the MK statistic  
+                    if mk_stats.slope == 0:
+                        results_dicts[gage_index]['results'].loc[value, 'mk_decision'] == 'no trend'
+                        results_dicts[gage_index]['results'].loc[value, 'sen_slope'] == np.nan  
 
     return results_dicts
 

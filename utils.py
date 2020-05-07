@@ -1,5 +1,6 @@
 import glob
 import pandas as pd
+import numpy as np
 
 def import_ffc_data():
     class_folders = glob.glob('data_inputs/ffc_metrics_historic/*')
@@ -56,3 +57,37 @@ def make_results_dicts(ffc_data):
         current_gage['results'] = results
         all_results.append(current_gage)
     return all_results
+
+def summarize_data(results_dicts):
+    classes = [[] for i in range(9)]
+    for gage_dict in results_dicts:
+        for i in range(1,10):
+            if gage_dict['class'] == i:
+                # have to align indexing of classes starting at 1 with Python's default 0-indexing
+                classes[i-1].append(gage_dict)
+    metrics = results_dicts[0]['results'].index
+    summary_df = pd.DataFrame(index=metrics)
+    # look in each class for that metric
+    for index in range(1,10):
+        current_class = classes[index-1]
+        summary_df['class_{}_down'.format(index)] = np.nan
+        summary_df['class_{}_no_trend'.format(index)] = np.nan
+        summary_df['class_{}_up'.format(index)] = np.nan
+        for metric in metrics: 
+            down_trends = 0
+            no_trends = 0
+            up_trends = 0
+            for gage in current_class:
+                mk_decision = gage['results'].loc[metric,'mk_decision']
+                if mk_decision == 'decreasing':
+                    down_trends += 1
+                elif mk_decision == 'no trend':
+                    no_trends += 1
+                elif mk_decision == 'increasing':
+                    up_trends += 1
+            summary_df.loc[metric, 'class_{}_down'.format(index)] = down_trends
+            summary_df.loc[metric, 'class_{}_no_trend'.format(index)] = no_trends
+            summary_df.loc[metric, 'class_{}_up'.format(index)] = up_trends
+    summary_df.to_csv('data_outputs/mk_summary.csv')
+
+
