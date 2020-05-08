@@ -11,28 +11,31 @@ def import_ffc_data():
         class_name = int(class_folder[-1])
         main_metric_files = glob.glob(class_folder + '/*flow_result.csv')
         supp_metric_files = glob.glob(class_folder + '/*supplementary_metrics.csv')
+        # pull out supplementary metric information for each gage
         for supp_file in supp_metric_files:
             supp_dict = {}
             supp_dict['gage_id'] = int(supp_file[46:54])
             supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
             supp_dicts.append(supp_dict)
         for metric_file in main_metric_files:
+            main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
+            # optional filter out gages by POR length and end date
+            por_len = len(main_metrics.columns)
+            por_end = int(main_metrics.columns[-1])
+            if por_len < 40 or por_end < 2005:
+                continue 
+
             gage_dict = int(metric_file[46:54])
             # create dictionary for each gage named after gage id, with class and metric results inside 
             gage_dict = {}
             gage_dict['gage_id'] = int(metric_file[46:54])
             gage_dict['class'] = class_name
+            # align supplemental metric file with main metric file, and add info to the main gage dict
             for supp_dict in supp_dicts:
                 if supp_dict['gage_id'] == gage_dict['gage_id']:
                     # add supp_dict metrics to gage_dict metrics
-                    main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
                     gage_dict['ffc_metrics'] = pd.concat([main_metrics, supp_dict['supp_metrics']], axis=0)
-            ffc_dicts.append(gage_dict)
-            # Or, store gage info in class instances
-            # gage_id = int(metric_file[46:54])
-            # ffc_metrics = pd.read_csv(metric_file, sep=',', index_col=None)
-            # current_gage = Gage(gage_id, class_name, ffc_metrics)
-       
+            ffc_dicts.append(gage_dict) 
     return ffc_dicts
         
 def make_summary_dicts(ffc_data):
@@ -44,7 +47,8 @@ def make_summary_dicts(ffc_data):
         end_yr = int(gage_dict['ffc_metrics'].columns[-1])
         summary_df = summary_df.append({'gage_id':gage_dict['gage_id'], 'class':gage_dict['class'], \
         'start_yr':start_yr, 'end_yr':end_yr, 'POR_len':por_len}, ignore_index=True)
-    return summary_dicts
+    summary_df.to_csv('data_outputs/por.csv')
+    return summary_df
 
 def make_results_dicts(ffc_data):
     all_results = []
