@@ -6,9 +6,9 @@ Wet_BFL_Mag_10,748.6000000000001,1400.0,518.0,988.0000000000002,494.0,1058.0,719
 Wet_BFL_Mag_50,1645.0,2760.0,1520.0,2870.0,1510.0,2150.0,2085.0,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,2220.0,1560.0
 Wet_Tim,35,43,14,37,28,95,38,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,20,84
 Wet_BFL_Dur,200,177,221,180,183,147,188,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,210,139
-Peak_2,26900.0,26900.0,26900.0,26900.0,26900.0,26900.0,26900.0,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,26900.0,26900.0
-Peak_5,30440.000000000004,30440.000000000004,30440.000000000004,30440.000000000004,30440.000000000004,30440.000000000004,30440.000000000004,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,30440.000000000004,30440.000000000004
-Peak_10,39269.99999999999,39269.99999999999,39269.99999999999,39269.99999999999,39269.99999999999,39269.99999999999,39269.99999999999,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,39269.99999999999,39269.99999999999
+Peak_2,18200.0,59700.0,23700.0,37000.0,28000.0,28700.0,25800.0,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,28800.0,20400.0
+Peak_5,18200.0,59700.0,23700.0,37000.0,28000.0,28700.0,25800.0,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,28800.0,20400.0
+Peak_10,18200.0,59700.0,23700.0,37000.0,28000.0,28700.0,25800.0,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,28800.0,20400.0
 Peak_Dur_2,None,4,None,2,1,2,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,1,None
 Peak_Dur_5,None,3,None,1,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None
 Peak_Dur_10,None,1,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None

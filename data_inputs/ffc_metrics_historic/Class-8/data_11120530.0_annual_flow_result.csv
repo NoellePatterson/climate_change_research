@@ -6,9 +6,9 @@ Wet_BFL_Mag_10,0.2,0.18,None,None,None,None,None,None,None,None,0.432,0.26,None,
 Wet_BFL_Mag_50,0.5,0.4,None,None,None,None,None,None,None,None,0.51,0.365,None,None,None,None,None,0.27,0.21,0.06,0.31
 Wet_Tim,48,71,None,None,None,None,None,None,None,None,106,74,None,None,None,None,None,8,59,75,145
 Wet_BFL_Dur,127,127,None,None,None,None,None,None,None,None,53,122,None,None,None,None,None,197,97,68,29
-Peak_2,31.0,31.0,None,None,None,None,None,None,None,None,31.0,31.0,None,None,None,None,None,31.0,31.0,31.0,31.0
-Peak_5,138.80000000000004,138.80000000000004,None,None,None,None,None,None,None,None,138.80000000000004,138.80000000000004,None,None,None,None,None,138.80000000000004,138.80000000000004,138.80000000000004,138.80000000000004
-Peak_10,223.20000000000002,223.20000000000002,None,None,None,None,None,None,None,None,223.20000000000002,223.20000000000002,None,None,None,None,None,223.20000000000002,223.20000000000002,223.20000000000002,223.20000000000002
+Peak_2,20.0,67.0,None,None,None,None,None,None,None,None,92.0,31.0,None,None,None,None,None,15.0,6.4,6.8,209.0
+Peak_5,20.0,67.0,None,None,None,None,None,None,None,None,92.0,31.0,None,None,None,None,None,15.0,6.4,6.8,209.0
+Peak_10,20.0,67.0,None,None,None,None,None,None,None,None,92.0,31.0,None,None,None,None,None,15.0,6.4,6.8,209.0
 Peak_Dur_2,None,1,None,None,None,None,None,None,None,None,4,1,None,None,None,None,None,None,None,None,4
 Peak_Dur_5,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,1
 Peak_Dur_10,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None

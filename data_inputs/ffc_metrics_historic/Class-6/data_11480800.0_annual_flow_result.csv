@@ -6,9 +6,9 @@ Wet_BFL_Mag_10,54.400000000000006,38.0,50.6,33.6,38.0,None,53.60000000000001,Non
 Wet_BFL_Mag_50,262.0,156.5,119.0,131.0,97.0,None,149.0,None,None,None,None,None,None,None,None,180.5,237.0
 Wet_Tim,35,78,95,37,41,None,18,None,None,None,None,None,None,None,None,60,16
 Wet_BFL_Dur,153,106,147,189,171,None,160,None,None,None,None,None,None,None,None,126,170
-Peak_2,3040.0,3040.0,3040.0,3040.0,3040.0,3040.0,3040.0,None,None,None,None,None,None,None,None,3040.0,3040.0
-Peak_5,4486.0,4486.0,4486.0,4486.0,4486.0,4486.0,4486.0,None,None,None,None,None,None,None,None,4486.0,4486.0
-Peak_10,4872.0,4872.0,4872.0,4872.0,4872.0,4872.0,4872.0,None,None,None,None,None,None,None,None,4872.0,4872.0
+Peak_2,4250.0,2000.0,3040.0,1830.0,2060.0,3690.0,4840.0,None,None,None,None,None,None,None,None,1180.0,5000.0
+Peak_5,4250.0,2000.0,3040.0,1830.0,2060.0,3690.0,4840.0,None,None,None,None,None,None,None,None,1180.0,5000.0
+Peak_10,4250.0,2000.0,3040.0,1830.0,2060.0,3690.0,4840.0,None,None,None,None,None,None,None,None,1180.0,5000.0
 Peak_Dur_2,1,None,1,None,None,1,2,None,None,None,None,None,None,None,None,None,3
 Peak_Dur_5,None,None,None,None,None,None,1,None,None,None,None,None,None,None,None,None,1
 Peak_Dur_10,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,1

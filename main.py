@@ -7,7 +7,7 @@ from calculations.trends import calc_mk_trend
 
 ffc_data = import_ffc_data()
 por_info = make_summary_dicts(ffc_data)
-# import pdb; pdb.set_trace()
 results_dicts = make_results_dicts(ffc_data)
 mk_trend = calc_mk_trend(ffc_data, results_dicts)
 summary = summarize_data(results_dicts)
+import pdb; pdb.set_trace()
