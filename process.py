@@ -68,6 +68,7 @@ for folder in folders:
     for file in files:
         print(file)
         df = pd.read_csv(file, names = ['date','flow'], parse_dates=['date'])
+        # Fix dates that were converted to future years when transferring the data
         future_dates = df['date'] > pd.to_datetime('20210101', format='%Y%m%d')
         df.loc[future_dates, 'date'] -= timedelta(days=365.25*100)
         df['date'] = df['date'].dt.strftime('%m/%d/%Y')

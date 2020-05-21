@@ -1,6 +1,7 @@
 import glob
 import pandas as pd
 import numpy as np
+from datetime import timedelta
 
 def import_ffc_data():
     class_folders = glob.glob('data_inputs/ffc_metrics_historic/*')
@@ -94,4 +95,18 @@ def summarize_data(results_dicts):
             summary_df.loc[metric, 'class_{}_up'.format(index)] = up_trends
     summary_df.to_csv('data_outputs/mk_summary.csv')
 
-
+def preprocess_dwr():
+    files = glob.glob('data_inputs/DWR_data/*')
+    for file in files:
+        df = pd.read_csv(file, names = ['date','flow'], parse_dates=['date'])  
+        # Dates were erroneously set a century late in all data from 1969 and earlier, so need to correct
+        for index, value in enumerate(df['date']):
+        # find index of first date to hit 1970
+            if pd.to_datetime(value, format='%m/%d/%Y') == pd.to_datetime('01011970', format='%m%d%Y'):
+                change_century_index = index
+                break
+        # all rows from start of data until 1970 get 100 years removed from date
+        for index, value in enumerate(df['date'][0:index]):
+            df.loc[index, 'date'] -= timedelta(days=365.24*100)
+        df['date'] = df['date'].dt.strftime('%m/%d/%Y')
+        df.to_csv('data_outputs/'+file, index=False)
