@@ -38,6 +38,31 @@ def import_ffc_data():
                     gage_dict['ffc_metrics'] = pd.concat([main_metrics, supp_dict['supp_metrics']], axis=0)
             ffc_dicts.append(gage_dict) 
     return ffc_dicts
+
+def import_dwr_data():
+    main_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*flow_result.csv')
+    supp_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*supplementary_metrics.csv')
+    ffc_dicts = []
+    supp_dicts = []
+    for supp_file in supp_metric_files:
+        supp_dict = {}
+        supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
+        supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
+        supp_dicts.append(supp_dict)
+    for metric_file in main_metric_files:
+        main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
+        # gage_dict = int(metric_file[46:54])
+        # create dictionary for each gage named after gage id, with class and metric results inside 
+        gage_dict = {}
+        gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
+        # align supplemental metric file with main metric file, and add info to the main gage dict
+        for supp_dict in supp_dicts:
+            if supp_dict['gage_id'] == gage_dict['gage_id']:
+                # add supp_dict metrics to gage_dict metrics
+                gage_dict['ffc_metrics'] = pd.concat([main_metrics, supp_dict['supp_metrics']], axis=0)
+        ffc_dicts.append(gage_dict)
+        import pdb; pdb.set_trace()
+    gages = []
         
 def make_summary_dicts(ffc_data):
     summary_df = pd.DataFrame(columns = ['gage_id', 'class', 'start_yr', 'end_yr', 'POR_len'])
