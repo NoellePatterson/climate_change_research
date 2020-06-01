@@ -58,8 +58,8 @@ def calc_mk_trend(ffc_data, results_dicts):
                     results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope 
                     # correct for an occasional error in which a slope of 0 is considered significant by the MK statistic  
                     if mk_stats.slope == 0:
-                        results_dicts[gage_index]['results'].loc[value, 'mk_decision'] == 'no trend'
-                        results_dicts[gage_index]['results'].loc[value, 'sen_slope'] == np.nan  
+                        results_dicts[gage_index]['results'].loc[value, 'mk_decision'] = 'no trend'
+                        results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = np.nan  
 
     return results_dicts
 

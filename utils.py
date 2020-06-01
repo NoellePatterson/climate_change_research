@@ -51,7 +51,6 @@ def import_dwr_data():
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
         main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
-        # gage_dict = int(metric_file[46:54])
         # create dictionary for each gage named after gage id, with class and metric results inside 
         gage_dict = {}
         gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
@@ -61,8 +60,18 @@ def import_dwr_data():
                 # add supp_dict metrics to gage_dict metrics
                 gage_dict['ffc_metrics'] = pd.concat([main_metrics, supp_dict['supp_metrics']], axis=0)
         ffc_dicts.append(gage_dict)
-        import pdb; pdb.set_trace()
-    gages = []
+    return ffc_dicts
+
+def import_drh_data():
+    drh_files = glob.glob('data_inputs/dwr_ffc_results' + '/*drh.csv')
+    supp_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*supplementary_metrics.csv')
+    drh_dicts = []
+    for index, drh_file in enumerate(drh_files):
+        drh_dict = {}
+        drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
+        drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
+        drh_dicts.append(drh_dict)
+    return drh_dicts
         
 def make_summary_dicts(ffc_data):
     summary_df = pd.DataFrame(columns = ['gage_id', 'class', 'start_yr', 'end_yr', 'POR_len'])
@@ -83,7 +92,7 @@ def make_results_dicts(ffc_data):
         current_gage = {}
         results = pd.DataFrame(index=metrics_list)
         current_gage['gage_id'] = gage_dict['gage_id']
-        current_gage['class'] = gage_dict['class']
+        # current_gage['class'] = gage_dict['class'] # use with FFC reference data, which has class
         current_gage['results'] = results
         all_results.append(current_gage)
     return all_results
@@ -119,6 +128,30 @@ def summarize_data(results_dicts):
             summary_df.loc[metric, 'class_{}_no_trend'.format(index)] = no_trends
             summary_df.loc[metric, 'class_{}_up'.format(index)] = up_trends
     summary_df.to_csv('data_outputs/mk_summary.csv')
+
+def summarize_data_no_classes(results_dicts):
+    metrics = results_dicts[0]['results'].index
+    summary_df = pd.DataFrame(index=metrics)
+    summary_df['Down'] = np.nan
+    summary_df['No_trend'] = np.nan
+    summary_df['Up'] = np.nan
+    for metric in metrics: 
+        down_trends = 0
+        no_trends = 0
+        up_trends = 0
+        for gage in results_dicts:
+            mk_decision = gage['results'].loc[metric,'mk_decision']
+            if mk_decision == 'decreasing':
+                down_trends += 1
+            elif mk_decision == 'no trend':
+                no_trends += 1
+            elif mk_decision == 'increasing':
+                up_trends += 1
+        summary_df.loc[metric, 'Down'] = down_trends
+        summary_df.loc[metric, 'No_trend'] = no_trends
+        summary_df.loc[metric, 'Up'] = up_trends
+    summary_df.to_csv('data_outputs/mk_summary_dwr.csv')
+
 
 def preprocess_dwr():
     files = glob.glob('data_inputs/DWR_data/*')
