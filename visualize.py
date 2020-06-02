@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 '''
 Print DRH plots for time series flow data
@@ -41,3 +42,31 @@ def plot_drh(drh_data):
     plt.show()
   
     return None
+
+def line_plots(ffc_data):
+    # gather plots of only one precip range (or temp range)
+    
+    p_08 = []
+    p_09 = []
+    for index, simulation in enumerate(ffc_data):
+        if simulation['gage_id'][4:] == 'P0.8':
+            p_08.append(simulation)
+        if simulation['gage_id'][4:] == 'P0.9':
+            p_09.append(simulation)
+
+    fig = plt.figure(figsize=(10, 4))
+    plt.subplot(1,1,1)
+    for simulation in p_08:
+        name = simulation['gage_id']
+        print(name)
+        x = np.arange(0, len(simulation['ffc_metrics'].iloc[0]))
+        y = pd.to_numeric(simulation['ffc_metrics'].loc['DS_Tim'])
+        # import pdb; pdb.set_trace()
+        plt.plot(x, y, label=name)
+        fig.savefig('data_outputs/plots/test.pdf')
+        # plt.show()
+    plt.title('Dry Season Timing')
+    plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
+    fig.savefig('data_outputs/plots/dryseason_p08_alltemps.pdf')
+    import pdb; pdb.set_trace()
+    # plot lines in chrono order
