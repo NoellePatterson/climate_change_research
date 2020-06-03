@@ -67,15 +67,63 @@ def line_plots(ffc_data):
     p_levels = [p_08, p_09, p_1, p_11, p_12, p_13]
     for p_level in p_levels:
         p_name = p_level[0]['gage_id'][4:]
+        x = pd.to_numeric(simulation['ffc_metrics'].columns)
         fig = plt.figure(figsize=(10, 4))
         plt.subplot(1,1,1)
         for simulation in p_level:
             name = simulation['gage_id']
             # import pdb; pdb.set_trace()
-            x = pd.to_numeric(simulation['ffc_metrics'].columns)
-            y = pd.to_numeric(simulation['ffc_metrics'].loc['FA_Tim'], errors='coerce')
+            y = pd.to_numeric(simulation['ffc_metrics'].loc['DS_Tim'], errors='coerce')
             plt.plot(x, y, label=name)
             # plt.show()
-        plt.title('Fall Pulse Timing')
+        control = pd.to_numeric(ffc_data[27]['ffc_metrics'].loc['DS_Tim'], errors='coerce')
+        plt.plot(x, y, '--', label='DT0P1_control', color='black', linewidth=.8)
+        plt.title('Dry Season Timing')
         plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
-        fig.savefig('data_outputs/plots/fall_tim_{}_alltemps.pdf'.format(p_name))
+        fig.savefig('data_outputs/plots/dry_tim_{}_alltemps.pdf'.format(p_name))
+
+def scatterplot(ffc_data):
+    # narrow down to all six DT4 results plus DT0P1 control
+    dt0 = []
+    dt1 = []
+    dt2 = []
+    dt3 = []
+    dt4 = []
+    for index, simulation in enumerate(ffc_data):
+        if simulation['gage_id'][0:3] == 'DT0':
+            dt0.append(simulation)
+        if simulation['gage_id'][0:3] == 'DT1':
+            dt1.append(simulation)
+        if simulation['gage_id'][0:3] == 'DT2':
+            dt2.append(simulation)
+        if simulation['gage_id'][0:3] == 'DT3':
+            dt3.append(simulation)
+        if simulation['gage_id'][0:3] == 'DT4':
+            dt4.append(simulation)
+        if simulation['gage_id'] == 'DT0DP1':
+            control_sim = simulation
+
+    dsmag_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce'))
+    dstim_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Tim'], errors='coerce'))
+
+    scatter_colors = ['red', 'blue', 'green', 'purple', 'orange', 'pink']
+    fig, ax = plt.subplots(figsize=(8,8))
+    contl_x = pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Tim'], errors='coerce')
+    contl_y = pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce')
+    ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
+
+    for sim_index, sim in enumerate(dt3):
+        name = sim['gage_id']
+        # import pdb; pdb.set_trace()
+        x = pd.to_numeric(sim['ffc_metrics'].loc['DS_Tim'], errors='coerce')
+        y = pd.to_numeric(sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce')
+        ax.scatter(x, y, color=scatter_colors[sim_index], label=name)
+    plt.axhline(y=dsmag_control, ls='--', color='black', label='Average control timing')
+    plt.axvline(x=dstim_control, ls=':', color='black', label='Average control magnitude')
+    plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
+    plt.ylabel("Dry Season Magnitude")
+    plt.xlabel("Dry Season Timing")
+    fig.savefig('data_outputs/plots/scatter/dry_tim_mag_DT3.pdf')
+    plt.show()
+    import pdb; pdb.set_trace()
+
