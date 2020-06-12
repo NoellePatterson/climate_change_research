@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
+from collections import OrderedDict
 
 '''
 Print DRH plots for time series flow data
@@ -102,28 +103,56 @@ def scatterplot(ffc_data):
             dt4.append(simulation)
         if simulation['gage_id'] == 'DT0DP1':
             control_sim = simulation
+    # import pdb; pdb.set_trace()
+    mag_metric = 'DS_Mag_50' # FA_Mag' , 'Wet_BFL_Mag_50' , 'SP_Mag' , DS_Mag_50
+    time_metric = 'DS_Tim' # 'FA_Tim' , 'Wet_Tim' , 'SP_Tim' , DS_Tim
+    dsmag_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc[mag_metric], errors='coerce'))
+    dstim_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc[time_metric], errors='coerce'))
 
-    dsmag_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce'))
-    dstim_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Tim'], errors='coerce'))
+    temp_sims = [dt0, dt1, dt2, dt3, dt4]
+    for temp_sim in temp_sims:
+        fig, ax = plt.subplots(figsize=(8,8))
+        contl_x = pd.to_numeric(control_sim['ffc_metrics'].loc[time_metric], errors='coerce')
+        contl_y = pd.to_numeric(control_sim['ffc_metrics'].loc[mag_metric], errors='coerce')
+        ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
+        ax.set_ylim(top=700) # fall: max 8600 , wet: max 7500 , sp: max 60000 , dry: 700
+        ax.set_xlim(230, 395) # fall: (-1, 60) , wet: (-1, 185) , sp: (50, 350) , dry: (230, 395)
+        
 
-    scatter_colors = ['red', 'blue', 'green', 'purple', 'orange', 'pink']
-    fig, ax = plt.subplots(figsize=(8,8))
-    contl_x = pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Tim'], errors='coerce')
-    contl_y = pd.to_numeric(control_sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce')
-    ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
-
-    for sim_index, sim in enumerate(dt3):
-        name = sim['gage_id']
+        # loop through the precip sims within each temp sim
+        for sim_index, sim in enumerate(temp_sim):
+            name = sim['gage_id']
+            if name[-3:] == '0.8': 
+                color = '#eb9800' # orange
+            elif name[-3:] == '0.9': 
+                color = '#ffe3b1' # light orange
+            elif name[-3:] == 'DP1': 
+                color = '#f6fbff' # very light blue
+            elif name[-3:] == '1.1': 
+                color = '#cfeaff' # light blue
+            elif name[-3:] == '1.2':
+                color = '#1e9bff' # medium blue
+            elif name[-3:] == '1.3':
+                color = '#005da8' # dark blue
+            # import pdb; pdb.set_trace()
+            x = pd.to_numeric(sim['ffc_metrics'].loc[time_metric], errors='coerce')
+            y = pd.to_numeric(sim['ffc_metrics'].loc[mag_metric], errors='coerce')
+            ax.scatter(x, y, color=color, edgecolors='black', label=name)
+        plt.axhline(y=dsmag_control, ls='--', color='black', label='Average control timing')
+        plt.axvline(x=dstim_control, ls=':', color='black', label='Average control magnitude')
         # import pdb; pdb.set_trace()
-        x = pd.to_numeric(sim['ffc_metrics'].loc['DS_Tim'], errors='coerce')
-        y = pd.to_numeric(sim['ffc_metrics'].loc['DS_Mag_50'], errors='coerce')
-        ax.scatter(x, y, color=scatter_colors[sim_index], label=name)
-    plt.axhline(y=dsmag_control, ls='--', color='black', label='Average control timing')
-    plt.axvline(x=dstim_control, ls=':', color='black', label='Average control magnitude')
-    plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
-    plt.ylabel("Dry Season Magnitude")
-    plt.xlabel("Dry Season Timing")
-    fig.savefig('data_outputs/plots/scatter/dry_tim_mag_DT3.pdf')
-    plt.show()
-    import pdb; pdb.set_trace()
+        
+        # Attempt to order legend did not work, consider trying again later
+        # handles, labels = ax.get_legend_handles_labels()
+        # by_label = OrderedDict(zip(labels, handles))
+        # plt.legend(labels, handles)
+
+        plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
+        
+        plt.ylabel("Dry Season Magnitude")
+        plt.xlabel("Dry Season Timing")
+        
+        fig.savefig('data_outputs/plots/scatter/dry_tim_mag_{}.pdf'.format(temp_sim[0]['gage_id'][0:3]))
+        # plt.show()
+        # import pdb; pdb.set_trace()
 
