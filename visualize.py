@@ -44,6 +44,47 @@ def plot_drh(drh_data):
   
     return None
 
+def plot_rh(rh_data):
+    # reorder list so that simulations plot out in a logical order
+    sim_order = [21, 20, 25, 17, 19, 23, 15, 26, 1, 22, 28, 13, 10, 2, 18, 5, 0, 12, 4, 6, 8, 11, 7, 3, 14, 29, 9, 24, 27, 16]
+    rh_data = [rh_data[i] for i in sim_order]
+
+    percentiles = [10, 25, 50, 75, 90]
+    percentile_keys = ['ten', 'twenty_five', 'fifty', 'seventy_five', 'ninety']
+
+    for sim_index, simulation in enumerate(rh_data):
+        rh = {}
+        for index, percentile in enumerate(percentile_keys):
+            rh[percentile] = []
+        # within each simulation, pull out flow percentiles from each row
+        for row_index, _ in enumerate(simulation['data'].iloc[:,0]): # loop through each row, 366 total
+            # loop through all five percentiles
+            for index, percentile in enumerate(percentiles): 
+                # calc flow percentiles across all years for each row of flow matrix
+                flow_row = pd.to_numeric(simulation['data'].iloc[row_index, :], errors='coerce')
+                rh[percentile_keys[index]].append(np.nanpercentile(flow_row, percentile))
+        
+        plt.rc('ytick', labelsize=5) 
+        plt.subplot(5, 6, sim_index+1)
+        name = simulation['name']
+        # make plot
+        plt.title('{}'.format(name), size=9)
+        
+        plt.xticks([])
+        plt.tick_params(axis='y', which='major', pad=1)
+
+        x = np.arange(0,366,1)
+        ax = plt.plot(rh['ten'], color = 'navy', label = "10%")
+        plt.plot(rh['twenty_five'], color = 'blue', label = "25%")
+        plt.plot(rh['fifty'], color='red', label = "50%")
+        plt.plot(rh['seventy_five'], color = 'blue', label = "75%")
+        plt.plot(rh['ninety'], color = 'navy', label = "90%")
+        plt.fill_between(x, rh['ten'], rh['twenty_five'], color='powderblue')
+        plt.fill_between(x, rh['twenty_five'], rh['fifty'], color='powderblue')
+        plt.fill_between(x, rh['fifty'], rh['seventy_five'], color='powderblue')
+        plt.fill_between(x, rh['seventy_five'], rh['ninety'], color='powderblue')
+    plt.show()
+
 def line_plots(ffc_data):
     # gather plots of only one precip range (or temp range)
     p_08 = []

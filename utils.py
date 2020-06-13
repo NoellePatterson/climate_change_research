@@ -64,14 +64,22 @@ def import_dwr_data():
 
 def import_drh_data():
     drh_files = glob.glob('data_inputs/dwr_ffc_results' + '/*drh.csv')
-    supp_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*supplementary_metrics.csv')
     drh_dicts = []
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
         drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
-    return drh_dicts
+
+    rh_files = glob.glob('data_inputs/dwr_ffc_results' + '/*matrix.csv')
+    rh_dicts = []
+    for index, rh_file in enumerate(rh_files):
+        rh_dict = {}
+        rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
+        rh_dict['data'] = pd.read_csv(rh_file, sep=',', index_col=None)
+        rh_dicts.append(rh_dict)
+        
+    return drh_dicts, rh_dicts
         
 def make_summary_dicts(ffc_data):
     summary_df = pd.DataFrame(columns = ['gage_id', 'class', 'start_yr', 'end_yr', 'POR_len'])
