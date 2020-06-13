@@ -73,15 +73,25 @@ def line_plots(ffc_data):
         plt.subplot(1,1,1)
         for simulation in p_level:
             name = simulation['gage_id']
+            if name[:3] == 'DT0':
+                color = '#FFEC19'
+            elif name[:3] == 'DT1':
+                color = '#FFC100'
+            elif name[:3] == 'DT2':
+                color = '#FF9800'
+            elif name[:3] == 'DT3':
+                color = '#FF5607'
+            elif name[:3] == 'DT4':
+                color = '#F6412D'
             # import pdb; pdb.set_trace()
-            y = pd.to_numeric(simulation['ffc_metrics'].loc['DS_Tim'], errors='coerce')
-            plt.plot(x, y, label=name)
+            y = pd.to_numeric(simulation['ffc_metrics'].loc['SP_Tim'], errors='coerce')
+            plt.plot(x, y, label=name, color=color)
             # plt.show()
-        control = pd.to_numeric(ffc_data[27]['ffc_metrics'].loc['DS_Tim'], errors='coerce')
+        control = pd.to_numeric(ffc_data[27]['ffc_metrics'].loc['SP_Tim'], errors='coerce')
         plt.plot(x, y, '--', label='DT0P1_control', color='black', linewidth=.8)
-        plt.title('Dry Season Timing')
+        plt.title('Spring Timing')
         plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
-        fig.savefig('data_outputs/plots/dry_tim_{}_alltemps.pdf'.format(p_name))
+        fig.savefig('data_outputs/plots/lines/spring_tim_{}_alltemps.pdf'.format(p_name))
 
 def scatterplot(ffc_data):
     # narrow down to all six DT4 results plus DT0P1 control
