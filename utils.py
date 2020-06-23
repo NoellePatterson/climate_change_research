@@ -164,10 +164,10 @@ def summarize_data_no_classes(results_dicts):
 def preprocess_dwr():
     files = glob.glob('data_inputs/DWR_data/*')
     for file in files:
-        df = pd.read_csv(file, names = ['date','flow'], parse_dates=['date'])  
+        df = pd.read_csv(file,  parse_dates=['date'])   # names = ['date','flow'] <- if headers are not already defined
         # Dates were erroneously set a century late in all data from 1969 and earlier, so need to correct
         for index, value in enumerate(df['date']):
-        # find index of first date to hit 1970
+            # find index of first date to hit 1970
             if pd.to_datetime(value, format='%m/%d/%Y') == pd.to_datetime('01011970', format='%m%d%Y'):
                 change_century_index = index
                 break

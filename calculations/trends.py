@@ -7,7 +7,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 '''
-Calculate Mann-Kendall trends in FFC historic reference streamflow data
+Calculate Mann-Kendall trends in input flow data processed by the functional flows calculator
 '''
 
 def calc_mk_trend(ffc_data, results_dicts):

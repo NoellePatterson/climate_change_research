@@ -83,6 +83,8 @@ def plot_rh(rh_data):
         plt.fill_between(x, rh['twenty_five'], rh['fifty'], color='powderblue')
         plt.fill_between(x, rh['fifty'], rh['seventy_five'], color='powderblue')
         plt.fill_between(x, rh['seventy_five'], rh['ninety'], color='powderblue')
+        # plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, ncol=7, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
+        
     plt.show()
 
 def line_plots(ffc_data):
