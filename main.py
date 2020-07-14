@@ -3,7 +3,8 @@ import os
 import pandas as pd
 import numpy as np
 from utils import import_ffc_data, import_dwr_data, import_drh_data, make_results_dicts, summarize_data, summarize_data_no_classes, make_summary_dicts, preprocess_dwr
-from calculations.trends import calc_mk_trend
+from trends import calc_mk_trend
+from hydrograph import hydrograph
 from visualize import plot_drh, plot_rh, line_plots, scatterplot
 
 # run with raw flow data from DWR dss files to prepare it for running through the FFC. Files stored in outputs folder. Only run once for new data. 
@@ -19,7 +20,10 @@ drh_data, rh_data = import_drh_data()
 # plots = plot_drh(drh_data)
 # rh_plot = plot_rh(rh_data)
 # line_plots = line_plots(ffc_data)
-scatter_plot = scatterplot(ffc_data)
+# scatter_plot = scatterplot(ffc_data)
+
+# Generate annotated hydrographs of DWR modeled flow data
+hydrograph = hydrograph(ffc_data, rh_data)
 
 # Statistical analysis tool using preprocessing outputs from above
 # por_info = make_summary_dicts(ffc_data)
