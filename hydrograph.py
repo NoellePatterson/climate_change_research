@@ -122,7 +122,10 @@ def hydrograph(ffc_data, rh_data):
     for index, flow in enumerate(plot_data):
         y_plot = pd.to_numeric(plot_data.iloc[:,index], errors='coerce')
         plt.plot(y_plot, linewidth=.6, c=str(greyscale[index]), zorder=1)
-    plt.title('Control - {} - All flow years'.format(name), size=9)
+        # try one bold hydrograph for reference
+        if index == 6: # use 2 for dry years, 63 for moderate/all years, 6 for wet years
+            plt.plot(y_plot, linewidth=.6, color='black', zorder=2)
+    plt.title('Control - {} - Wet years'.format(name), size=9)
     plt.ylabel('Flow (cfs)') 
     tick_spacing = [0, 30.5, 61, 91.5, 122, 152.5, 183, 213.5, 244, 274.5, 305, 335.5]
     tick_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
@@ -131,7 +134,7 @@ def hydrograph(ffc_data, rh_data):
     ###################################################################################################################
     
     # 4. Plot out boxes based on FFC metric vals. 
-    years = 'all_years'
+    years = 'wet' # options are: 'all_years', 'dry', 'mod', 'wet' 
     year_type = ffc_vals[years]
 
     # Fall pulse component box
@@ -169,7 +172,7 @@ def hydrograph(ffc_data, rh_data):
     spmed_x = year_type.loc['SP_Tim_med']
     sp_rocmed_x = year_type.loc['SP_Tim_med']+30
     dsmed_x = year_type.loc['DS_Tim_med']
-    x_med = [0, famed_x-.5*fadur_x,famed_x,famed_x+.5*fadur_x, wsmed_x,wsmed_x, peakmed_x-peakdur_x/2,peakmed_x,peakmed_x+peakdur_x/2, pre_spmed_x, spmed_x, sp_rocmed_x, dsmed_x, 366]
+    x_med = [0, famed_x-.5*fadur_x,famed_x,famed_x+.5*fadur_x, wsmed_x,wsmed_x, pre_spmed_x, spmed_x, sp_rocmed_x, dsmed_x, 366]
 
     famed_y = year_type.loc['FA_Mag_med']
     dsmed_y = year_type.loc['DS_Mag_50_med']
@@ -181,7 +184,7 @@ def hydrograph(ffc_data, rh_data):
         peakmed_y = year_type.loc['Peak_5_med']
     spmed_y = year_type.loc['SP_Mag_med']
     sp_rocmed_y = year_type.loc['SP_Mag_med']-30*year_type.loc['SP_ROC_med']*year_type.loc['SP_Mag_med']
-    y_med = [dsmed_y, dsmed_y,famed_y,dsmed_y, dsmed_y,wsmed_y, wsmed_y,peakmed_y,wsmed_y, wsmed_y, spmed_y, sp_rocmed_y, dsmed_y, dsmed_y]
+    y_med = [dsmed_y, dsmed_y,famed_y,dsmed_y, dsmed_y,wsmed_y, wsmed_y, spmed_y, sp_rocmed_y, dsmed_y, dsmed_y]
     plt.plot(x_med, y_med, 'k--', zorder=4)
 
     '''
@@ -203,42 +206,44 @@ def hydrograph(ffc_data, rh_data):
     y_75 = [ds_y_75, ds_y_75, ws_y_75, ws_y_75, sp_y_75, sp_roc_y_75, ds_y_75]
     y_90 = [ds_y_90, ds_y_90, ws_y_90, ws_y_90, sp_y_90, sp_roc_y_90, ds_y_90]
 
+    # plot horizontal line to show peak val magnitude
+    plt.plot([ws_x_25, pre_spmed_x], [peakmed_y, peakmed_y], 'k--', zorder=4)
 
     '''
     Use fill between function to plot 25/75 percentile bounds
     '''
     # fill from start of year to start of wet season, including fall pulse
-    plt.fill_between([0, famed_x-.5*fadur_x, famed_x, famed_x+.5*fadur_x, wsmed_x], [ds_y_25, ds_y_25, fa_y_25, ds_y_25, ds_y_25], [ds_y_75, ds_y_75, fa_y_75,ds_y_75,ds_y_75], facecolor='blue', zorder=3, alpha=0.5)
+    plt.fill_between([0, famed_x-.5*fadur_x, famed_x, famed_x+.5*fadur_x, wsmed_x], [ds_y_25, ds_y_25, fa_y_25, ds_y_25, ds_y_25], [ds_y_75, ds_y_75, fa_y_75,ds_y_75,ds_y_75], facecolor='blue', zorder=3, alpha=0.65)
     # vertical fill around wet season start (to capture variation in start timing)
-    plt.fill_betweenx([ds_y_25, ws_y_75], [ws_x_25], [ws_x_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_betweenx([ds_y_25, ws_y_75], [ws_x_25], [ws_x_75], facecolor='blue', zorder=3, alpha=0.65)
     # fill around wet season magnitude until start of spring
-    plt.fill_between([ws_x_75, pre_spmed_x], [ws_y_25], [ws_y_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_between([ws_x_75, pre_spmed_x], [ws_y_25], [ws_y_75], facecolor='blue', zorder=3, alpha=0.65)
     # fill around rising limb of spring, arbitrary starting point at 60 days before 
-    plt.fill_between([pre_spmed_x, spmed_x], [ws_y_25, sp_y_25], [ws_y_75, sp_y_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_between([pre_spmed_x, spmed_x], [ws_y_25, sp_y_25], [ws_y_75, sp_y_75], facecolor='blue', zorder=3, alpha=0.65)
     # fill around falling limb of spring, chose 30 days to set SP_ROC slope (with adjustments)
-    plt.fill_between([spmed_x, sp_rocmed_x], [sp_y_25, sp_roc_y_25], [sp_y_75, sp_roc_y_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_between([spmed_x, sp_rocmed_x], [sp_y_25, sp_roc_y_25], [sp_y_75, sp_roc_y_75], facecolor='blue', zorder=3, alpha=0.65)
     # fill around falling limb from spring ROC to start of dry season
-    plt.fill_between([sp_rocmed_x, dsmed_x], [sp_roc_y_25, ds_y_25], [sp_roc_y_75, ds_y_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_between([sp_rocmed_x, dsmed_x], [sp_roc_y_25, ds_y_25], [sp_roc_y_75, ds_y_75], facecolor='blue', zorder=3, alpha=0.65)
     # fill from dry season to end of water year
-    plt.fill_between([dsmed_x, 366], [ds_y_25], [ds_y_75], facecolor='blue', zorder=3, alpha=0.75)
+    plt.fill_between([dsmed_x, 366], [ds_y_25], [ds_y_75], facecolor='blue', zorder=3, alpha=0.65)
 
     '''
     Use fill between function to plot 10/90 percentile bounds
     '''
     # fill from start of year to start of wet season, including fall pulse
-    plt.fill_between([0, famed_x-.5*fadur_x, famed_x, famed_x+.5*fadur_x, wsmed_x], [ds_y_10, ds_y_10, fa_y_10, ds_y_10, ds_y_10], [ds_y_90, ds_y_90, fa_y_90,ds_y_90,ds_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([0, famed_x-.5*fadur_x, famed_x, famed_x+.5*fadur_x, wsmed_x], [ds_y_10, ds_y_10, fa_y_10, ds_y_10, ds_y_10], [ds_y_90, ds_y_90, fa_y_90,ds_y_90,ds_y_90], facecolor='blue', zorder=2, alpha=0.45)
     # vertical fill around wet season start (to capture variation in start timing)
-    plt.fill_betweenx([ds_y_10, ws_y_90], [ws_x_10], [ws_x_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_betweenx([ds_y_10, ws_y_90], [ws_x_10], [ws_x_90], facecolor='blue', zorder=2, alpha=0.45)
     # fill around wet season magnitude until start of spring
-    plt.fill_between([ws_x_90, pre_spmed_x], [ws_y_10], [ws_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([ws_x_90, pre_spmed_x], [ws_y_10], [ws_y_90], facecolor='blue', zorder=2, alpha=0.45)
     # fill around rising limb of spring, arbitrary starting point at 60 days before 
-    plt.fill_between([pre_spmed_x, spmed_x], [ws_y_10, sp_y_10], [ws_y_90, sp_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([pre_spmed_x, spmed_x], [ws_y_10, sp_y_10], [ws_y_90, sp_y_90], facecolor='blue', zorder=2, alpha=0.45)
     # fill around falling limb of spring, chose 30 days to set SP_ROC slope (with adjustments)
-    plt.fill_between([spmed_x, sp_rocmed_x], [sp_y_10, sp_roc_y_10], [sp_y_90, sp_roc_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([spmed_x, sp_rocmed_x], [sp_y_10, sp_roc_y_10], [sp_y_90, sp_roc_y_90], facecolor='blue', zorder=2, alpha=0.45)
     # fill around falling limb from spring ROC to start of dry season
-    plt.fill_between([sp_rocmed_x, dsmed_x], [sp_roc_y_10, ds_y_10], [sp_roc_y_90, ds_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([sp_rocmed_x, dsmed_x], [sp_roc_y_10, ds_y_10], [sp_roc_y_90, ds_y_90], facecolor='blue', zorder=2, alpha=0.45)
     # fill from dry season to end of water year
-    plt.fill_between([dsmed_x, 366], [ds_y_10], [ds_y_90], facecolor='blue', zorder=2, alpha=0.65)
+    plt.fill_between([dsmed_x, 366], [ds_y_10], [ds_y_90], facecolor='blue', zorder=2, alpha=0.45)
 
     plt.show()
     # import pdb; pdb.set_trace()
