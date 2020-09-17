@@ -102,35 +102,50 @@ intra_precip_manip <- function(annual_precip){
   # Function for modifying precip intensity, input is a one-year precip timeseries
   
   # set intensity parameters
-  dry_remove = .6 # val 0-1
-  highflow_perc = .95 # val 0-1, percentile of extreme flows to make more extreme
-  highflow_add = .5 # val 0-1, prop of harvested water to add only to extreme days
+  dry_percent = .25 # val 0-1, percent annual precip in dry months at end
+  wet_percent = 1 - dry_percent
+  highflow_perc = .15 # val 0-1, percent annual flow in five highest days at end
   
   # sum up precip from April - Oct (dry season)
   wet = c(1:91, 306:length(annual_precip)) # Nov-March
   dry = c(92:305) # April - Oct
   
-  # create backup of original flow to
+  # create backup of original annual precip
   orig_annual_precip <- annual_precip
-  # Multiply all flow days in dry season by removal prop
-  annual_precip[92:305] <- annual_precip[92:305]*(1-dry_remove)
-  # tabulate havested water amt
-  dry_harvest = sum(orig_annual_precip[92:305]*dry_remove)
-  # quantify highflow perc val as percentile of all >0 flow days in wet season
-  highflow_val = quantile(annual_precip[wet][which(annual_precip[wet]!=0)], highflow_perc)
-  # ID days in wet season that are above highflow perc
-  highflow_days = which(annual_precip[wet] > highflow_val) # locs correspond to annual_precip[wet], not annual_precip
-  # add the perc of highflow to those days from dry season harvest
-  add_each_highflow = (highflow_add*dry_harvest)/length(highflow_days)
-  annual_precip[wet][highflow_days] <- annual_precip[wet][highflow_days] + add_each_highflow
-  # tally number of all other flow days in wet season (not incl highflows)
-  val_add_wet_days = dry_harvest*(1-highflow_add)
-  wet_days_loc = which(annual_precip[wet]>0 & annual_precip[wet]<highflow_val)
-  add_each_wet_day = val_add_wet_days/length(wet_days_loc)
-  # apply rest of dry season harvest to all flow days in wet season
-  annual_precip[wet][wet_days_loc] <- annual_precip[wet][wet_days_loc] + add_each_wet_day
-  annual_precip2 = annual_precip
-  return(annual_precip2)
+  annual_cum <- sum(annual_precip)
+  # calculate volume of precip in dry and wet months, end goal
+  final_dry_vol <- annual_cum*dry_percent
+  final_wet_vol <- annual_cum*wet_percent
+  # calculate current vol in dry months, and difference to goal
+  current_dry_vol <- sum(annual_precip[dry])
+  dry_diff <- current_dry_vol - final_dry_vol
+  perc_dry_reduce <- final_dry_vol/current_dry_vol
+  # Apply reduction percentage across all dry season, save harvest amt for later
+  annual_precip[dry] <- annual_precip[dry] * perc_dry_reduce
+  dry_harvest <- sum(orig_annual_precip[dry] - annual_precip[dry])
+  
+  # Onto extreme wet days
+  # Calc current percent rainfall in 5 highest wet days
+  current_high_vol <- sum(rev(sort(annual_precip[wet]))[1:5])
+  high_vol_cutoff <- rev(sort(annual_precip[wet]))[5]
+  final_high_vol <- highflow_perc * annual_cum
+  high_diff <- final_high_vol - current_high_vol
+  # If there is enough water from dry harvest for high day goal, add amt needed and 
+  # distribute rest across wet season precip days
+  if(high_diff <= dry_harvest){
+    high_days_locs <- which(annual_precip[wet] >= high_vol_cutoff)
+    annual_precip[wet][high_days_locs] <- annual_precip[wet][high_days_locs] + high_diff/length(high_days_locs)
+    remaining_harvest <- dry_harvest - high_diff
+    wet_days_locs <- which(annual_precip[wet]>0 & annual_precip[wet]<high_vol_cutoff)
+    annual_precip[wet][wet_days_locs] <- annual_precip[wet][wet_days_locs] + remaining_harvest/length(wet_days_locs)
+  } else{
+    # Otherwise if dry harvest is not enough to fill high days deficit, shave some additional precip off wet season days
+    remaining_deficit <- high_diff - dry_harvest
+    # Shave off precip from wet season days to make up high day deficit
+    annual_precip[wet][wet_days_locs] <- annual_precip[wet][wet_days_locs] - remaining_deficit/length(wet_days_locs)
+    # Add deficit to high precip days
+    annual_precip[wet][high_days_locs] <- annual_precip[wet][high_days_locs] + (dry_harvest+remaining_deficit)/length(high_days_locs)
+  }
 }
 
 #################
