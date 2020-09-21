@@ -5,6 +5,7 @@ import numpy as np
 from utils import import_ffc_data, import_dwr_data, import_drh_data, make_results_dicts, summarize_data, summarize_data_no_classes, make_summary_dicts, preprocess_dwr
 from trends import calc_mk_trend
 from hydrograph import hydrograph
+from planning_horizons import planning_horizon
 from visualize import plot_drh, plot_rh, line_plots, scatterplot
 
 # run with raw flow data from DWR dss files to prepare it for running through the FFC. Files stored in outputs folder. Only run once for new data. 
@@ -14,7 +15,7 @@ from visualize import plot_drh, plot_rh, line_plots, scatterplot
 ffc_data = import_dwr_data()
 
 # Use FFC output files to prepare data for plotting 
-drh_data, rh_data = import_drh_data()
+# drh_data, rh_data = import_drh_data()
 
 # Plotting tools using preprocessing outputs from functions above
 # plots = plot_drh(drh_data)
@@ -23,7 +24,8 @@ drh_data, rh_data = import_drh_data()
 # scatter_plot = scatterplot(ffc_data)
 
 # Generate annotated hydrographs of DWR modeled flow data
-hydrograph = hydrograph(ffc_data, rh_data)
+planning_horizon_data = planning_horizon(ffc_data)
+# hydrograph = hydrograph(ffc_data, rh_data)
 
 # Statistical analysis tool using preprocessing outputs from above
 # por_info = make_summary_dicts(ffc_data)
