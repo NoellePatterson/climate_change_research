@@ -46,60 +46,8 @@ convert_grids_to_files <- function(files, grid_list){
   return(files)
 }
 
-interannual_precip_manip <- function(files){
-  # intensity parameters
-  dry_year_threshold = .2 # val 0-1, based on Persad e.a. 2020
-  wet_year_threshold = .8 # val 0-1, based on Persad e.a. 2020
-  freq_20th_perc = .33 # val 0-1, percentage of years under 20th perc in output
-  # To achieve metric in Persad paper, increase occurrence of years in 20th/80th percentage
-  # of precip to get an increased frequency of years in these extreme bins. Assumption for
-  # calc that shift set for the dry season will reflect similarly in the wet years. 
-  # Separate each grid into a 64-yr timeseries (list of 64 lists)
-  grid_list <- list_grids(files)
-  
-  # within 64-yr timeseries for each grid: 
-  for(grid_num in seq(1:length(grid_list))){
-    grid <- grid_list[[grid_num]]
-    # assign all years their percentile based on cumsum of precip
-    cumsums <- unlist(lapply(grid, sum))
-    # percentiles <- rank(cumsums)/length(cumsums)
-    # e.g., 20th percentile value before modification
-    dry_threshold <- quantile(cumsums, dry_year_threshold)
-    # a higher percentile to lower down to (e.g.) 20th percentile values
-    lowering_threshold <- quantile(cumsums, freq_20th_perc)
-    # total precip volume to remove from all years in lower-down percentile
-    reduction_volume <- lowering_threshold-dry_threshold
-    # target certain number of dry years to remove precip from
-    dry_years_locs <- which(cumsums < lowering_threshold)
-    # harvest precip proportionally off all flow days in dry years
-    for(dry_year in dry_years_locs){
-      reduction_perc <- reduction_volume/sum(grid[[dry_year]])
-      grid[[dry_year]] <- grid[[dry_year]]*(1-reduction_perc)
-    }
-    # tally total amt of dry year precip harvest
-    precip_harvest <- reduction_volume*length(dry_years_locs)
-    # target wet years to add precip to, split precip harvest among these years
-    wet_threshold <- quantile(cumsums, 1-freq_20th_perc)
-    wet_year_locs <- which(cumsums > wet_threshold)
-    # add harvested recip to each flow day equally
-    each_year_addition <- precip_harvest/length(wet_year_locs)
-    for(wet_year in wet_year_locs) {
-      perc_increase <- (sum(grid[[wet_year]]) + each_year_addition)/sum(grid[[wet_year]])
-      grid[[wet_year]] <- grid[[wet_year]]*perc_increase
-    }
-    # calc final distribution of years (years in extremes, 20/80 bins?)
-    updated_cumsums <- unlist(lapply(grid, sum))
-    lower_bin_freq <- length(which(updated_cumsums < dry_threshold))/length(grid)
-    upper_bin_freq <- length(which(updated_cumsums > wet_threshold))/length(grid)
-    grid_list[[grid_num]] <- grid
-  }
-  # convert updated grids back into original (updated) file format
-  updated_files <- convert_grids_to_files(files, grid_list)
-  return(updated_files)
-}
-
 intra_precip_manip <- function(annual_precip){
-  # Function for modifying precip intensity, input is a one-year precip timeseries
+  # Function for modifying precip intensity within a year, input is a one-year precip timeseries
   
   # set intensity parameters
   dry_percent = .25 # val 0-1, percent annual precip in dry months at end
@@ -148,6 +96,74 @@ intra_precip_manip <- function(annual_precip){
   }
 }
 
+interannual_precip_manip <- function(files){
+  # Function for modifying precip intensity across all years, input is entire collection of timeseries
+  # intensity parameters
+  orig_perc_low = .4 # val 0-1, based on Persad e.a. 2020
+  orig_perc_high = .6 # val 0-1, based on Persad e.a. 2020
+  final_perc_low = .2 # val 0-1, percentage of years under 20th perc in output
+  final_perc_high = .8 # val 0-1, percentage of years under 20th perc in output
+  extreme_shift_low = .1 # val -(0-1), reduce driest years this far below current low
+  extreme_shift_high = .1 # val 0-1, raise highest years this far above current high
+  extreme_shift_percent = 0.05 # val 0-1, number of years corresponding to this percentage will be
+    # shifted out to new extremes on min and max
+  # To achieve metric in Persad paper, increase occurrence of years in 20th/80th percentage
+  # of precip to get an increased frequency of years in these extreme bins. Assumption for
+  # calc that shift set for the dry season will reflect similarly in the wet years. 
+  # Separate each grid into a 64-yr timeseries (list of 64 lists)
+  grid_list <- list_grids(files)
+  
+  # within 64-yr timeseries for each grid: 
+  for(grid_num in seq(1:length(grid_list))){
+    grid <- grid_list[[grid_num]]
+    # assign all years their percentile based on cumsum of precip
+    cumsums <- unlist(lapply(grid, sum))
+    # e.g., 20th percentile value before modification
+    orig_dry_threshold <- quantile(cumsums, orig_perc_low)
+    # a higher percentile to lower down to (e.g.) 20th percentile values
+    new_dry_threshold <- quantile(cumsums, final_perc_low)
+    # total precip volume to remove from all years in lower-down percentile
+    reduction_volume <- orig_dry_threshold-new_dry_threshold
+    # target certain number of dry years to remove precip from
+    dry_years_locs <- which(cumsums < lowering_threshold)
+    # harvest precip proportionally off all flow days in dry years
+    for(dry_year in dry_years_locs){
+      reduction_perc <- reduction_volume/sum(grid[[dry_year]])
+      grid[[dry_year]] <- grid[[dry_year]]*(1-reduction_perc)
+    }
+    # Extreme dry years 
+    low_days_num <- round(length(grid)*extreme_shift_percent)
+    # find low diff, value to subract off lowest current days to bring it x% lower than historic
+    low_diff <- min(grid) - min(grid)*extreme_shift_low
+    low_thresh <- sort(grid)[5]
+    # subtract the low diff from 5 lowest days in record so they all move toward new dry extreme
+    grid[which(grid <= low_thresh)] <- grid[which(grid <= low_thresh)] - low_diff
+    extreme_dry_harvest <- low_diff * 5
+    
+
+    
+    # tally total amt of dry year precip harvest
+    precip_harvest <- reduction_volume*length(dry_years_locs) + extreme_dry_harvest
+    # target wet years to add precip to, split precip harvest among these years
+    wet_threshold <- quantile(cumsums, 1-freq_20th_perc)
+    wet_year_locs <- which(cumsums > wet_threshold)
+    # add harvested recip to each flow day equally
+    each_year_addition <- precip_harvest/length(wet_year_locs)
+    for(wet_year in wet_year_locs) {
+      perc_increase <- (sum(grid[[wet_year]]) + each_year_addition)/sum(grid[[wet_year]])
+      grid[[wet_year]] <- grid[[wet_year]]*perc_increase
+    }
+    # calc final distribution of years (years in extremes, 20/80 bins?)
+    updated_cumsums <- unlist(lapply(grid, sum))
+    lower_bin_freq <- length(which(updated_cumsums < dry_threshold))/length(grid)
+    upper_bin_freq <- length(which(updated_cumsums > wet_threshold))/length(grid)
+    grid_list[[grid_num]] <- grid
+  }
+  # convert updated grids back into original (updated) file format
+  updated_files <- convert_grids_to_files(files, grid_list)
+  return(updated_files)
+}
+
 #################
 ##### MAIN ######
 #################
@@ -164,12 +180,12 @@ files = lapply(filenames, readRDS)
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
 # grid, need to pull out every 4868th data point...
 
-# apply interannual changes before entering into loop
+# apply interannual (across years) changes before entering into loop
 updated_files <- interannual_precip_manip(files)
 # to test:
 all.equal(files[[1]], updated_files[[1]])
 
-# Perform intraannual changes for all 64 years on updated files
+# Perform intraannual changes for all 64 years on updated files (within-year)
 for(file_num in seq(1, length(updated_files))){ 
   # proof of concept for first year data (out of 64 total years)
   precip_all_grids = updated_files[[file_num]][,6] # precipe is 6th col of df
