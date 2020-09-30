@@ -99,10 +99,10 @@ intra_precip_manip <- function(annual_precip){
 interannual_precip_manip <- function(files){
   # Function for modifying precip intensity across all years, input is entire collection of timeseries
   # intensity parameters
-  orig_perc_low = .4 # val 0-1, based on Persad e.a. 2020
-  orig_perc_high = .6 # val 0-1, based on Persad e.a. 2020
-  final_perc_low = .2 # val 0-1, percentage of years under 20th perc in output
-  final_perc_high = .8 # val 0-1, percentage of years under 20th perc in output
+  orig_perc_low = .4 # val 0-1, avg annual precip value low before shifting precip across years 
+  orig_perc_high = .6 # val 0-1, avg annual precip value high before shifting precip across years 
+  final_perc_low = .2 # val 0-1, avg annual precip value low before shifting precip across years. Must be lower than orig. 
+  final_perc_high = .8 # val 0-1, avg annual precip value high before shifting precip across years. Must be higher than orig.
   extreme_shift_low = .1 # val -(0-1), reduce driest years this far below current low
   extreme_shift_high = .1 # val 0-1, raise highest years this far above current high
   extreme_shift_percent = 0.05 # val 0-1, number of years corresponding to this percentage will be
@@ -125,35 +125,85 @@ interannual_precip_manip <- function(files){
     # total precip volume to remove from all years in lower-down percentile
     reduction_volume <- orig_dry_threshold-new_dry_threshold
     # target certain number of dry years to remove precip from
-    dry_years_locs <- which(cumsums < lowering_threshold)
+    dry_years_locs <- which(cumsums <= orig_dry_threshold & cumsums >= new_dry_threshold)
     # harvest precip proportionally off all flow days in dry years
     for(dry_year in dry_years_locs){
       reduction_perc <- reduction_volume/sum(grid[[dry_year]])
       grid[[dry_year]] <- grid[[dry_year]]*(1-reduction_perc)
     }
-    # Extreme dry years 
-    low_days_num <- round(length(grid)*extreme_shift_percent)
+    # Tally up extreme dry years 
+    low_days_count <- round(length(grid)*extreme_shift_percent)
     # find low diff, value to subract off lowest current days to bring it x% lower than historic
-    low_diff <- min(grid) - min(grid)*extreme_shift_low
-    low_thresh <- sort(grid)[5]
-    # subtract the low diff from 5 lowest days in record so they all move toward new dry extreme
-    grid[which(grid <= low_thresh)] <- grid[which(grid <= low_thresh)] - low_diff
-    extreme_dry_harvest <- low_diff * 5
-    
+    low_diff <- min(cumsums)*extreme_shift_low
+    low_thresh <- sort(cumsums)[low_days_count]
+    extreme_low_locs <- which(cumsums <= low_thresh)
+    # subtract the low diff from x lowest years in record so they all move toward new dry extreme
+    for(year in extreme_low_locs){
+      reduction_perc <- low_diff/sum(grid[[year]])
+      grid[[year]] <- grid[[year]]*(1-reduction_perc)
+    }
 
+    extreme_dry_harvest <- low_diff * low_days_count
+    
     
     # tally total amt of dry year precip harvest
     precip_harvest <- reduction_volume*length(dry_years_locs) + extreme_dry_harvest
+    # Calc amt of precip needed to fulfill changes, add water from dry harvest first, and 
+    # if more needed add from middle-ground years
+    
     # target wet years to add precip to, split precip harvest among these years
-    wet_threshold <- quantile(cumsums, 1-freq_20th_perc)
-    wet_year_locs <- which(cumsums > wet_threshold)
-    # add harvested recip to each flow day equally
-    each_year_addition <- precip_harvest/length(wet_year_locs)
+    orig_wet_threshold <- quantile(cumsums, orig_perc_high)
+    final_wet_threshold <- quantile(cumsums, final_perc_high)
+    addition_volume <- final_wet_threshold - orig_wet_threshold
+    wet_year_locs <- which(cumsums >= orig_wet_threshold & cumsums <= final_wet_threshold)
+    total_wet_addition <- length(wet_year_locs) * addition_volume
+    
+    # Add to each year in percentile category based on total percent increase
     for(wet_year in wet_year_locs) {
-      perc_increase <- (sum(grid[[wet_year]]) + each_year_addition)/sum(grid[[wet_year]])
+      perc_increase <- (sum(grid[[wet_year]]) + addition_volume)/sum(grid[[wet_year]])
       grid[[wet_year]] <- grid[[wet_year]]*perc_increase
     }
-    # calc final distribution of years (years in extremes, 20/80 bins?)
+    
+    # Extreme wet years
+    high_days_count <- round(length(grid)*extreme_shift_percent)
+    # find high diff, value to add onto highest current days to bring it x% above historic
+    high_diff <- max(cumsums)*extreme_shift_high
+    high_thresh <- tail(sort(cumsums), high_days_count)
+    # Add the high diff to the x highest years in record so they all move toward new wet extreme
+    extreme_high_locs <- which(cumsums >= high_thresh)
+    for(year in extreme_high_locs){
+      perc_increase <- (sum(grid[[year]]) + high_diff)/sum(grid[[year]])
+      grid[[year]] <- grid[[year]]*(perc_increase)
+    }
+
+    extreme_wet_addition <- high_diff * high_days_count
+    
+    # Figure out how much the wet year additions exceed dry harvest
+    total_wet_take <- total_wet_addition + extreme_wet_addition
+    remaining_take <- total_wet_take - precip_harvest
+    if(remaining_take < 0){
+      print("no wet surplus!")
+    } else {
+      # For remaining surplus of wet addition, get there from taking flow off middle years
+      take_each_year <- remaining_take/10 # pick a number?
+      print(paste("take this amt off the middle years", take_each_year))
+      # define middle years, by rank order of 10 middle years
+      middle_years_low <- sort(cumsums)[28]
+      middle_years_high <- sort(cumsums)[37]
+      middle_years_loc <- which(cumsums >= middle_years_low & cumsums <= middle_years_high)
+      # remove take each year from each using multiply by percent method
+      for(year in middle_years){
+        reduction_perc <- take_each_year/sum(grid[[year]])
+        grid[[year]] <- grid[[year]]*(1-reduction_perc)
+      }
+    }
+    
+    
+    # calc final distribution of years (years in extremes, 20/80 bins)
+    # make sure you have precip val corresponding to orig 20th and 80th percentiles
+    # first get number of years blw 20 and abv 80, orig
+    # then get number of years blw 20 and abv 80, final
+    # report them out somehow. These vals only calculated once per dataset. Just print for now?
     updated_cumsums <- unlist(lapply(grid, sum))
     lower_bin_freq <- length(which(updated_cumsums < dry_threshold))/length(grid)
     upper_bin_freq <- length(which(updated_cumsums > wet_threshold))/length(grid)
