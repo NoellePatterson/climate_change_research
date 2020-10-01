@@ -19,8 +19,25 @@ list_grids <- function(files){
   # loop through each grid 
   for(grid_count in 1:4868){
     # populate each grid with its 64-yr timeseries
-    # grid <- vector(mode = "list", length = 64)
-    # for(year_count in 1:64){
+    grid <- vector(mode = "list", length = 64)
+    for(year_count in 1:64){
+      year <- separate_days(files[[year_count]][,6], grid_count)
+      # insert first year as first entry in grid
+      grid[[year_count]] <- year
+      # repeat for all years (put process into for loop or apply func)
+    }
+    all_grids[[grid_count]] <- grid
+  }
+  return(all_grids)
+}
+
+list_grids_test <- function(files){
+  # function takes test data and reformats into 4868 lists (one for each grid), each 
+  # containing 6 lists (one for each year), each containing a 365/366 day precip trace 
+  all_grids <- vector(mode = "list", length = 4868)
+  # loop through each grid 
+  for(grid_count in 1:4868){
+    # populate each grid with its 6-yr timeseries
     grid <- vector(mode = "list", length = 6) # for test runs
     for(year_count in 1:6){ # for test runs
       year <- separate_days(files[[year_count]][,6], grid_count)
@@ -44,6 +61,36 @@ convert_grids_to_files <- function(files, grid_list){
     }
   } 
   return(files)
+}
+
+create_summary <- function(files){
+  summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
+                                        "perc_wet_months", "perc_wet_days", "20th80th_perc"))
+  summary_df$original <- NA
+  grid_list <- list_grids_test(files)
+  mean_stat <- rep(NA, 4868)
+  median_stat <- rep(NA, 4868)
+  cumul <- rep(NA, 4868)
+  sd_daily <- rep(NA, 4868)
+  # where needed, populate summary data grids with x annual vals in list, to average later
+  for(count in seq(1:length(mean_stat))){
+    mean_stat[count] <- list(rep(NA, 6))
+    median_stat[count] <- list(rep(NA, 6))
+    cumul[count] <- list(rep(NA, 6))
+    sd_daily[count] <- list(rep(NA, 6))
+  }
+  # populate summary data grids
+  for(grid_num in seq(1:length(grid_list))){
+    mean_stat[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], mean))
+    median_stat[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], median))
+    cumul[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], cumulative))
+    sd_daily[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], sd))
+  }
+  # average annual stats, where necessary
+  mean_stat[[grid_num]] <- mean(mean_stat[[grid_num]])
+  median_stat[[grid_num]] <- mean(median_stat[[grid_num]])
+  sd_daily[[grid_num]] <- mean(sd_daily[[grid_num]])
+
 }
 
 intra_precip_manip <- function(annual_precip){
@@ -111,7 +158,7 @@ interannual_precip_manip <- function(files){
   # of precip to get an increased frequency of years in these extreme bins. Assumption for
   # calc that shift set for the dry season will reflect similarly in the wet years. 
   # Separate each grid into a 64-yr timeseries (list of 64 lists)
-  grid_list <- list_grids(files)
+  grid_list <- list_grids_test(files)
   
   # within 64-yr timeseries for each grid: 
   for(grid_num in seq(1:length(grid_list))){
@@ -229,6 +276,8 @@ files = lapply(filenames, readRDS)
 # I remove precip column for processing. Data is organized by listing the first day of year's data
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
 # grid, need to pull out every 4868th data point...
+
+summary_stats <- create_summary(files)
 
 # apply interannual (across years) changes before entering into loop
 updated_files <- interannual_precip_manip(files)
