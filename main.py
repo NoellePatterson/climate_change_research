@@ -20,7 +20,7 @@ ffc_data = import_dwr_data()
 # Plotting tools using preprocessing outputs from functions above
 # plots = plot_drh(drh_data)
 # rh_plot = plot_rh(rh_data)
-# line_plots = line_plots(ffc_data)
+line_plots = line_plots(ffc_data)
 # scatter_plot = scatterplot(ffc_data)
 
 # Generate annotated hydrographs of DWR modeled flow data

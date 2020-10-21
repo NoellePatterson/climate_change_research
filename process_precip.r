@@ -63,34 +63,112 @@ convert_grids_to_files <- function(files, grid_list){
   return(files)
 }
 
-create_summary <- function(files){
+perc_wet_days_calc <- function(annual_data){
+  # calc the percent of precip in the year's five highest days
+  high_days <- rev(sort(annual_data))[1:5]
+  high_days_perc <- sum(high_days)/sum(annual_data)
+  return(high_days_perc)
+}
+
+perc_wet_months_calc <- function(annual_data){
+  # calc the percentage of precip occuring in Nov-March months
+  wet_months_loc <- c(1:91, 306:length(annual_data)) # Nov-March
+  wet_month_perc <- sum(annual_data[wet_months_loc])/sum(annual_data)
+  return(wet_month_perc)
+}
+
+calc_sd_annual <- function(all_data){
+  year_cums <- unlist(lapply(all_data, sum))
+  sd_annual <- sd(year_cums)
+  return(sd_annual)
+}
+
+get_perc_20th80th <- function(all_data){
+  # calculate 20th and 80th percentiles across entire POR
+  perc_20th <- rep(NA, 4868)
+  perc_80th <- rep(NA, 4868)
+  for(grid in seq(1:length(perc_20th))){
+    year_sums <- unlist(lapply(all_data[[grid]], sum))
+    perc_20th[grid] <- quantile(year_sums, probs=c(0.2))
+    perc_80th[grid] <- quantile(year_sums, probs=c(0.8))
+  }
+  perc_20th80th <- list(perc_20th, perc_80th)
+  return(perc_20th80th)
+}
+
+calc_metric_20th80th <- function(all_data, perc_20th, perc_80th){
+  # calc number of years below 20th percentile and above 80th percentile (of orig precip)
+  # perc20th and perc80th specific to this grid are input as single values
+  year_sums <- unlist(lapply(all_data, sum))
+  count <- 0
+  for(year in year_sums){
+    if(year < perc_20th){
+      count <- count + 1
+    } else if(year > perc_80th){
+      count <- count + 1
+    }
+  }
+  return(count/length(year_sums))
+}
+  
+create_summary <- function(files, orig_files){
+  # Metric defs: cumulative = total precip in entire POR. 
+  # perc_wet_months: percentage of precip in Nov-Mar
+  # perc_wet_days: percentate of precip in five highest days of the year
+  # 20th80th_perc: number of years above 80th perc and below 20th perc (percentiles based on original data)
   summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
                                         "perc_wet_months", "perc_wet_days", "20th80th_perc"))
   summary_df$original <- NA
   grid_list <- list_grids_test(files)
+  grid_list_orig <- list_grids_test(orig_files)
+  # calculate 20th and 80th annual percentiles of original data, to use in 20th/80th calc
+  perc_20th_80th <- get_perc_20th80th(grid_list_orig)
+  perc_20th <- perc_20th_80th[1]
+  perc_80th <- perc_20th_80th[2]
+  
+  # create variables for metrics needing daily data. One element in list for each year. 
   mean_stat <- rep(NA, 4868)
   median_stat <- rep(NA, 4868)
   cumul <- rep(NA, 4868)
   sd_daily <- rep(NA, 4868)
-  # where needed, populate summary data grids with x annual vals in list, to average later
+  perc_wet_days <- rep(NA, 4868)
+  perc_wet_months <- rep(NA, 4868)
+  sd_annual <- rep(NA, 4868)
+  perc_20th80th <- rep(NA, 4868)
+
+  # populate summary data grids with x annual vals in list, to average later
   for(count in seq(1:length(mean_stat))){
     mean_stat[count] <- list(rep(NA, 6))
     median_stat[count] <- list(rep(NA, 6))
     cumul[count] <- list(rep(NA, 6))
     sd_daily[count] <- list(rep(NA, 6))
+    perc_wet_days[count] <- list(rep(NA, 6))
+    perc_wet_months[count] <- list(rep(NA, 6))
   }
-  # populate summary data grids
-  for(grid_num in seq(1:length(grid_list))){
-    mean_stat[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], mean))
-    median_stat[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], median))
-    cumul[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], cumulative))
-    sd_daily[[grid_num]] <- unlist(lapply(grid_list[[grid_num]], sd))
+  # populate summary data grids: one value for each year, for each grid
+  for(grid in seq(1:length(mean_stat))){
+    mean_stat[[grid]] <- unlist(lapply(grid_list[[grid]], mean))
+    median_stat[[grid]] <- unlist(lapply(grid_list[[grid]], median))
+    cumul[[grid]] <- unlist(lapply(grid_list[[grid]], sum))
+    sd_daily[[grid]] <- unlist(lapply(grid_list[[grid]], sd))
+    perc_wet_days[[grid]] <- unlist(lapply(grid_list[[grid]], perc_wet_days_calc))
+    perc_wet_months[[grid]] <- unlist(lapply(grid_list[[grid]], perc_wet_months_calc))
+    sd_annual[[grid]] <- calc_sd_annual(grid_list[[grid]])
+    perc_20th80th[[grid]] <- calc_metric_20th80th(grid_list[[grid]], perc_20th[[1]][[grid]], perc_80th[[1]][[grid]])
   }
   # average annual stats, where necessary
-  mean_stat[[grid_num]] <- mean(mean_stat[[grid_num]])
-  median_stat[[grid_num]] <- mean(median_stat[[grid_num]])
-  sd_daily[[grid_num]] <- mean(sd_daily[[grid_num]])
-
+  for(grid in seq(1:length(mean_stat))){
+    mean_stat[[grid]] <- mean(mean_stat[[grid]])
+    median_stat[[grid]] <- mean(median_stat[[grid]])
+    cumul[[grid]] <- mean(cumul[[grid]])
+    sd_daily[[grid]] <- mean(sd_daily[[grid]])
+    perc_wet_days[[grid]] <- mean(perc_wet_days[[grid]])
+    perc_wet_months[[grid]] <- mean(perc_wet_months[[grid]])
+  }
+  # create por metrics
+  cb <- cbind(mean_stat, median_stat, cumul, sd_daily, perc_wet_days, perc_wet_months, sd_annual, perc_20th80th)
+  summary_df <- data.frame(cb)
+  return(summary_df)
 }
 
 intra_precip_manip <- function(annual_precip){
@@ -192,7 +270,6 @@ interannual_precip_manip <- function(files){
 
     extreme_dry_harvest <- low_diff * low_days_count
     
-    
     # tally total amt of dry year precip harvest
     precip_harvest <- reduction_volume*length(dry_years_locs) + extreme_dry_harvest
     # Calc amt of precip needed to fulfill changes, add water from dry harvest first, and 
@@ -245,7 +322,6 @@ interannual_precip_manip <- function(files){
       }
     }
     
-    
     # calc final distribution of years (years in extremes, 20/80 bins)
     # make sure you have precip val corresponding to orig 20th and 80th percentiles
     # first get number of years blw 20 and abv 80, orig
@@ -277,7 +353,10 @@ files = lapply(filenames, readRDS)
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
 # grid, need to pull out every 4868th data point...
 
-summary_stats <- create_summary(files)
+# summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
+# 20th/80th percentiles of years on. Need this whether or not the first file is the original or not. 
+summary_stats_orig <- create_summary(files, files)
+summary_stats_updated <- create_summary(updated_files, files)
 
 # apply interannual (across years) changes before entering into loop
 updated_files <- interannual_precip_manip(files)

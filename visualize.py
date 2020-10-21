@@ -96,6 +96,7 @@ def line_plots(ffc_data):
     p_12 = []
     p_13 = []
     for index, simulation in enumerate(ffc_data):
+        # categorize all simulations into groups based on precip level. Should be 6 simulations per group. 
         if simulation['gage_id'][4:] == 'P0.8':
             p_08.append(simulation)
         if simulation['gage_id'][4:] == 'P0.9':
@@ -130,9 +131,10 @@ def line_plots(ffc_data):
             y = pd.to_numeric(simulation['ffc_metrics'].loc['SP_Tim'], errors='coerce')
             plt.plot(x, y, label=name, color=color)
             # plt.show()
-        control = pd.to_numeric(ffc_data[27]['ffc_metrics'].loc['SP_Tim'], errors='coerce')
-        plt.plot(x, y, '--', label='DT0P1_control', color='black', linewidth=.8)
-        plt.title('Spring Timing')
+        # pull out control sim directly; it is the 27th in the group. 
+        control = pd.to_numeric(ffc_data[27]['ffc_metrics'].loc['SP_Tim'], errors='coerce') 
+        plt.plot(x, control, '--', label='DT0P1_control', color='black', linewidth=.8)
+        plt.title('Spring Recession Timing')
         plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
         fig.savefig('data_outputs/plots/lines/spring_tim_{}_alltemps.pdf'.format(p_name))
 
@@ -157,8 +159,8 @@ def scatterplot(ffc_data):
         if simulation['gage_id'] == 'DT0DP1':
             control_sim = simulation
     # import pdb; pdb.set_trace()
-    mag_metric = 'SP_Mag' # FA_Mag' , 'Wet_BFL_Mag_50' , 'SP_Mag' , DS_Mag_50
-    time_metric = 'SP_Tim' # 'FA_Tim' , 'Wet_Tim' , 'SP_Tim' , DS_Tim
+    mag_metric = 'Wet_BFL_Mag_50' # FA_Mag' , 'Wet_BFL_Mag_50' , 'SP_Mag' , DS_Mag_50
+    time_metric = 'Wet_Tim' # 'FA_Tim' , 'Wet_Tim' , 'SP_Tim' , DS_Tim
     dsmag_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc[mag_metric], errors='coerce'))
     dstim_control = np.nanmean(pd.to_numeric(control_sim['ffc_metrics'].loc[time_metric], errors='coerce'))
 
@@ -168,8 +170,8 @@ def scatterplot(ffc_data):
         contl_x = pd.to_numeric(control_sim['ffc_metrics'].loc[time_metric], errors='coerce')
         contl_y = pd.to_numeric(control_sim['ffc_metrics'].loc[mag_metric], errors='coerce')
         ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
-        ax.set_ylim(-100, 60000) # fall: max 8600 , wet: max 7500 , sp: max 60000 , dry: 700
-        ax.set_xlim(50, 350) # fall: (-1, 60) , wet: (-1, 185) , sp: (50, 350) , dry: (230, 395)
+        ax.set_ylim(-100, 7500) # fall: max 8600 , wet: max 7500 , sp: max 60000 , dry: 700
+        ax.set_xlim(-1, 185) # fall: (-1, 60) , wet: (-1, 185) , sp: (50, 350) , dry: (230, 395)
         
 
         # loop through the precip sims within each temp sim
@@ -202,10 +204,10 @@ def scatterplot(ffc_data):
 
         plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
         
-        plt.ylabel("Spring Recession Magnitude")
-        plt.xlabel("Spring Recession Timing")
+        plt.ylabel("Wet Season Magnitude")
+        plt.xlabel("Wet Season Timing")
         
-        fig.savefig('data_outputs/plots/scatter/spring_tim_mag_{}.pdf'.format(temp_sim[0]['gage_id'][0:3]))
+        fig.savefig('data_outputs/plots/scatter/wet_tim_mag_{}.pdf'.format(temp_sim[0]['gage_id'][0:3]))
         # plt.show()
         # import pdb; pdb.set_trace()
 
