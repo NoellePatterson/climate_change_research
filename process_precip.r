@@ -305,18 +305,19 @@ interannual_precip_manip <- function(files){
     # Figure out how much the wet year additions exceed dry harvest
     total_wet_take <- total_wet_addition + extreme_wet_addition
     remaining_take <- total_wet_take - precip_harvest
-    if(remaining_take < 0){
+    if(remaining_take[[1]] <= 0){
       print("no wet surplus!")
     } else {
       # For remaining surplus of wet addition, get there from taking flow off middle years
       take_each_year <- remaining_take/10 # pick a number?
-      print(paste("take this amt off the middle years", take_each_year))
+      print(paste("take this amt off the middle years:", take_each_year))
       # define middle years, by rank order of 10 middle years
-      middle_years_low <- sort(cumsums)[28]
-      middle_years_high <- sort(cumsums)[37]
+      middle_years <- seq(28, 37, by=1)
+      middle_years_low <- sort(cumsums)[min(middle_years)]
+      middle_years_high <- sort(cumsums)[max(middle_years)]
       middle_years_loc <- which(cumsums >= middle_years_low & cumsums <= middle_years_high)
       # remove take each year from each using multiply by percent method
-      for(year in middle_years){
+      for(year in middle_years_loc){
         reduction_perc <- take_each_year/sum(grid[[year]])
         grid[[year]] <- grid[[year]]*(1-reduction_perc)
       }
@@ -328,8 +329,8 @@ interannual_precip_manip <- function(files){
     # then get number of years blw 20 and abv 80, final
     # report them out somehow. These vals only calculated once per dataset. Just print for now?
     updated_cumsums <- unlist(lapply(grid, sum))
-    lower_bin_freq <- length(which(updated_cumsums < dry_threshold))/length(grid)
-    upper_bin_freq <- length(which(updated_cumsums > wet_threshold))/length(grid)
+    lower_bin_freq <- length(which(updated_cumsums < orig_dry_threshold))/length(grid)
+    upper_bin_freq <- length(which(updated_cumsums > orig_wet_threshold))/length(grid)
     grid_list[[grid_num]] <- grid
   }
   # convert updated grids back into original (updated) file format
@@ -352,11 +353,6 @@ files = lapply(filenames, readRDS)
 # I remove precip column for processing. Data is organized by listing the first day of year's data
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
 # grid, need to pull out every 4868th data point...
-
-# summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
-# 20th/80th percentiles of years on. Need this whether or not the first file is the original or not. 
-summary_stats_orig <- create_summary(files, files)
-summary_stats_updated <- create_summary(updated_files, files)
 
 # apply interannual (across years) changes before entering into loop
 updated_files <- interannual_precip_manip(files)
@@ -387,5 +383,9 @@ for(file_num in seq(1, length(updated_files))){
   setwd(new_path)
   saveRDS(updated_file, paste("updated_precip",filenames[file_num], sep="_"))
 }
-path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/detrended-one-8th-rdata/"
-test_file <- readRDS(paste(path, "updated_precip_year1file.rds", sep=""))
+
+# summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
+# 20th/80th percentiles of years on. Need this whether or not the first file is the original or not. 
+summary_stats_orig <- create_summary(files, files)
+summary_stats_updated <- create_summary(updated_files, files)
+
