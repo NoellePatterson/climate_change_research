@@ -31,6 +31,41 @@ list_grids <- function(files){
   return(all_grids)
 }
 
+list_grids_merced <- function(files){
+  # function takes all data and reformats into 30 lists (one for each grid), each 
+  # containing 64 lists (one for each year), each containing a 365/366 day precip trace 
+  merced <- read.delim(
+    "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/Merced_grids.txt", header=FALSE, sep="")
+  m_lat <- merced[,1]
+  m_lon <- merced[,2]
+  test_year <- files[[1]]
+  test_lat <- test_year[,2]
+  test_year$latlon <- with(test_year, paste0(lat, lon))
+  unique_grids <- test_year[1:4868,]
+  # identify merced grids out of the total 4868
+  which(unique_grids$lon == m_lon & unique_grids$lat == m_lat)
+  for(index in seq(length(merced))){
+    unique_grids[unique_grids$lon == m_lon[index] & unique_grids$lat == m_lat[index]]
+    unique_grids[unique_grids$lon == m_lon[index]]
+  }
+  unique_grids[unique_grids$lon == m_lon & unique_grids$lat == m_lat]
+  
+  all_grids <- vector(mode = "list", length = 4868)
+  # loop through each grid 
+  for(grid_count in 1:4868){
+    # populate each grid with its 64-yr timeseries
+    grid <- vector(mode = "list", length = 64)
+    for(year_count in 1:64){
+      year <- separate_days(files[[year_count]][,6], grid_count)
+      # insert first year as first entry in grid
+      grid[[year_count]] <- year
+      # repeat for all years (put process into for loop or apply func)
+    }
+    all_grids[[grid_count]] <- grid
+  }
+  return(all_grids)
+}
+
 list_grids_test <- function(files){
   # function takes test data and reformats into 4868 lists (one for each grid), each 
   # containing 6 lists (one for each year), each containing a 365/366 day precip trace 
@@ -236,7 +271,8 @@ interannual_precip_manip <- function(files){
   # of precip to get an increased frequency of years in these extreme bins. Assumption for
   # calc that shift set for the dry season will reflect similarly in the wet years. 
   # Separate each grid into a 64-yr timeseries (list of 64 lists)
-  grid_list <- list_grids_test(files)
+  # grid_list <- list_grids_test(files)
+  grid_list <- list_grids(files)
   
   # within 64-yr timeseries for each grid: 
   for(grid_num in seq(1:length(grid_list))){
@@ -352,7 +388,7 @@ files = lapply(filenames, readRDS)
 # 4868 grids/points total. Loc, date, precip, and temp (as min and max) are included in each row. 
 # I remove precip column for processing. Data is organized by listing the first day of year's data
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
-# grid, need to pull out every 4868th data point...
+# grid, pull out every 4868th data point
 
 # apply interannual (across years) changes before entering into loop
 updated_files <- interannual_precip_manip(files)
@@ -361,7 +397,6 @@ all.equal(files[[1]], updated_files[[1]])
 
 # Perform intraannual changes for all 64 years on updated files (within-year)
 for(file_num in seq(1, length(updated_files))){ 
-  # proof of concept for first year data (out of 64 total years)
   precip_all_grids = updated_files[[file_num]][,6] # precipe is 6th col of df
   grid_ls = seq(1, 4868, 1) 
   all_grids = lapply(grid_ls, separate_days, precip_all_grids=precip_all_grids)
