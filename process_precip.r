@@ -210,9 +210,9 @@ intra_precip_manip <- function(annual_precip){
   # Function for modifying precip intensity within a year, input is a one-year precip timeseries
   
   # set intensity parameters
-  dry_percent = .25 # val 0-1, percent annual precip in dry months at end
-  wet_percent = 1 - dry_percent
-  highflow_perc = .15 # val 0-1, percent annual flow in five highest days at end
+  wet_percent = .0556 # val 0-1, percent increase in wet season precip
+  dry_percent = 1 - wet_percent
+  highflow_perc = .1435 # val 0-1, percent increase in flow of three highest days
   
   # sum up precip from April - Oct (dry season)
   wet = c(1:91, 306:length(annual_precip)) # Nov-March
@@ -220,10 +220,12 @@ intra_precip_manip <- function(annual_precip){
   
   # create backup of original annual precip
   orig_annual_precip <- annual_precip
+  orig_wet_precip <- sum(orig_annual_precip[wet])
   annual_cum <- sum(annual_precip)
   # calculate volume of precip in dry and wet months, end goal
-  final_dry_vol <- annual_cum*dry_percent
-  final_wet_vol <- annual_cum*wet_percent
+  final_wet_vol <- orig_wet_precip + (orig_wet_precip * wet_percent)
+  final_dry_vol <- annual_cum - final_wet_vol
+  
   # calculate current vol in dry months, and difference to goal
   current_dry_vol <- sum(annual_precip[dry])
   dry_diff <- current_dry_vol - final_dry_vol
@@ -233,10 +235,11 @@ intra_precip_manip <- function(annual_precip){
   dry_harvest <- sum(orig_annual_precip[dry] - annual_precip[dry])
   
   # Onto extreme wet days
-  # Calc current percent rainfall in 5 highest wet days
-  current_high_vol <- sum(rev(sort(annual_precip[wet]))[1:5])
-  high_vol_cutoff <- rev(sort(annual_precip[wet]))[5]
-  final_high_vol <- highflow_perc * annual_cum
+  # Calc current percent rainfall in 3 highest wet days
+  current_high_vol <- sum(rev(sort(annual_precip[wet]))[1:3])
+  high_vol_cutoff <- rev(sort(annual_precip[wet]))[3]
+  # Set highflow increase to be a percentage increase from original value. 
+  final_high_vol <- current_high_vol + (highflow_perc * current_high_vol) 
   high_diff <- final_high_vol - current_high_vol
   # If there is enough water from dry harvest for high day goal, add amt needed and 
   # distribute rest across wet season precip days
