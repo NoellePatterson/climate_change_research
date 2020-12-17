@@ -64,25 +64,6 @@ list_grids_merced <- function(files){
   return(list(merced_indices, merced_grids))
 }
 
-list_grids_test <- function(files){
-  # function takes test data and reformats into 4868 lists (one for each grid), each 
-  # containing 6 lists (one for each year), each containing a 365/366 day precip trace 
-  all_grids <- vector(mode = "list", length = 4868)
-  # loop through each grid 
-  for(grid_count in 1:4868){
-    # populate each grid with its 6-yr timeseries
-    grid <- vector(mode = "list", length = 6) # for test runs
-    for(year_count in 1:6){ # for test runs
-      year <- separate_days(files[[year_count]][,6], grid_count)
-      # insert first year as first entry in grid
-      grid[[year_count]] <- year
-      # repeat for all years (put process into for loop or apply func)
-    }
-    all_grids[[grid_count]] <- grid
-  }
-  return(all_grids)
-}
-
 convert_grids_to_files <- function(files, grid_list){
   # go through each file to update column 6
   for(file_num in seq(1:length(files))){
@@ -152,8 +133,8 @@ create_summary <- function(files, orig_files){
   summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
                                         "perc_wet_months", "perc_wet_days", "20th80th_perc"))
   summary_df$original <- NA
-  grid_list <- list_grids_test(files)
-  grid_list_orig <- list_grids_test(orig_files)
+  grid_list <- list_grids(files)
+  grid_list_orig <- list_grids(orig_files)
   # calculate 20th and 80th annual percentiles of original data, to use in 20th/80th calc
   perc_20th_80th <- get_perc_20th80th(grid_list_orig)
   perc_20th <- perc_20th_80th[1]
@@ -276,8 +257,8 @@ interannual_precip_manip <- function(merced_grids){
   orig_perc_high = .6 # val 0-1, avg annual precip value high before shifting precip across years 
   final_perc_low = .2 # val 0-1, avg annual precip value low before shifting precip across years. Must be lower than orig. 
   final_perc_high = .8 # val 0-1, avg annual precip value high before shifting precip across years. Must be higher than orig.
-  extreme_shift_low = .1 # val -(0-1), reduce driest years this far below current low
-  extreme_shift_high = .1 # val 0-1, raise highest years this far above current high
+  extreme_shift_low = .03 # val -(0-1), reduce driest years this far below current low
+  extreme_shift_high = .03 # val 0-1, raise highest years this far above current high
   extreme_shift_percent = 0.05 # val 0-1, number of years corresponding to this percentage will be
     # shifted out to new extremes on min and max
   # To achieve metric in Persad paper, increase occurrence of years in 20th/80th percentage
@@ -357,7 +338,6 @@ interannual_precip_manip <- function(merced_grids){
     } else {
       # For remaining surplus of wet addition, get there from taking flow off middle years
       take_each_year <- remaining_take/10 # pick a number?
-      print(paste("take this amt off the middle years:", take_each_year))
       # define middle years, by rank order of 10 middle years
       middle_years <- seq(28, 37, by=1)
       middle_years_low <- sort(cumsums)[min(middle_years)]
@@ -414,7 +394,7 @@ merced_grids <- merced_output[[2]]
 # apply interannual (across years) changes before entering into loop
 updated_merced_grids <- interannual_precip_manip(merced_grids)
 # to test:
-all.equal(merced_grids[[1]][27], updated_merced_grids[[1]][27])
+# all.equal(merced_grids[[1]][27], updated_merced_grids[[1]][27])
 
 
 updated_files <- list()
