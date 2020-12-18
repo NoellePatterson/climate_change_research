@@ -6,6 +6,7 @@
 #################
 ### FUNCTIONS ###
 #################
+
 separate_days <- function(precip_all_grids, grid_num){
   locs = seq(1, length(precip_all_grids), 4868) + grid_num - 1
   grid = precip_all_grids[c(locs)]
@@ -110,17 +111,28 @@ get_perc_20th80th <- function(all_data){
   return(perc_20th80th)
 }
 
-calc_metric_20th80th <- function(all_data, perc_20th, perc_80th){
-  # calc number of years below 20th percentile and above 80th percentile (of orig precip)
-  # perc20th and perc80th specific to this grid are input as single values
+calc_metric_20th <- function(all_data, perc_20th){
+  # calc number of years below 20th percentile (of orig precip)
+  # perc20th specific to this grid are input as single values
   year_sums <- unlist(lapply(all_data, sum))
   count <- 0
   for(year in year_sums){
     if(year < perc_20th){
       count <- count + 1
-    } else if(year > perc_80th){
+    } 
+  }
+  return(count/length(year_sums))
+}
+
+calc_metric_80th <- function(all_data, perc_80th){
+  # calc number of years above 80th percentile (of orig precip)
+  # perc80th specific to this grid are input as single values
+  year_sums <- unlist(lapply(all_data, sum))
+  count <- 0
+  for(year in year_sums){
+    if(year > perc_80th){
       count <- count + 1
-    }
+      } 
   }
   return(count/length(year_sums))
 }
@@ -131,14 +143,14 @@ create_summary <- function(files, orig_files){
   # perc_wet_days: percentate of precip in three highest days of the year
   # 20th80th_perc: number of years above 80th perc and below 20th perc (percentiles based on original data)
   summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
-                                        "perc_wet_months", "perc_wet_days", "20th80th_perc"))
+                                        "perc_wet_months", "perc_wet_days", "20th_perc", "80th_perc"))
   summary_df$original <- NA
   grid_list <- list_grids(files)
   grid_list_orig <- list_grids(orig_files)
   # calculate 20th and 80th annual percentiles of original data, to use in 20th/80th calc
   perc_20th_80th <- get_perc_20th80th(grid_list_orig)
-  perc_20th <- perc_20th_80th[1]
-  perc_80th <- perc_20th_80th[2]
+  perc_20th_val <- perc_20th_80th[1]
+  perc_80th_val <- perc_20th_80th[2]
   
   # create variables for metrics needing daily data. One element in list for each year. 
   mean_stat <- rep(NA, 4868)
@@ -148,7 +160,8 @@ create_summary <- function(files, orig_files){
   perc_wet_days <- rep(NA, 4868)
   perc_wet_months <- rep(NA, 4868)
   sd_annual <- rep(NA, 4868)
-  perc_20th80th <- rep(NA, 4868)
+  perc_20th <- rep(NA, 4868)
+  perc_80th <- rep(NA, 4868)
 
   # populate summary data grids with x annual vals in list, to average later
   for(count in seq(1:length(mean_stat))){
@@ -168,7 +181,8 @@ create_summary <- function(files, orig_files){
     perc_wet_days[[grid]] <- unlist(lapply(grid_list[[grid]], perc_wet_days_calc))
     perc_wet_months[[grid]] <- unlist(lapply(grid_list[[grid]], perc_wet_months_calc))
     sd_annual[[grid]] <- calc_sd_annual(grid_list[[grid]])
-    perc_20th80th[[grid]] <- calc_metric_20th80th(grid_list[[grid]], perc_20th[[1]][[grid]], perc_80th[[1]][[grid]])
+    perc_20th[[grid]] <- calc_metric_20th(grid_list[[grid]], perc_20th_val[[1]][[grid]])
+    perc_80th[[grid]] <- calc_metric_80th(grid_list[[grid]], perc_80th_val[[1]][[grid]])
   }
   # average annual stats, where necessary
   for(grid in seq(1:length(mean_stat))){
@@ -180,7 +194,7 @@ create_summary <- function(files, orig_files){
     perc_wet_months[[grid]] <- mean(perc_wet_months[[grid]])
   }
   # create por metrics
-  cb <- cbind(mean_stat, median_stat, cumul, sd_daily, perc_wet_days, perc_wet_months, sd_annual, perc_20th80th)
+  cb <- cbind(mean_stat, median_stat, cumul, sd_daily, perc_wet_days, perc_wet_months, sd_annual, perc_20th, perc_80th)
   summary_df <- data.frame(cb)
   return(summary_df)
 }
