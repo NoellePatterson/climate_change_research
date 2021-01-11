@@ -22,9 +22,17 @@ list_grids <- function(files){
     # populate each grid with its 64-yr timeseries
     grid <- vector(mode = "list", length = 64)
     for(year_count in 1:64){
-      year <- separate_days(files[[year_count]][,6], grid_count)
+      # Pull out values for all eight columns, can choose which cols to return in output
+      lon <- separate_days(files[[year_count]][,1], grid_count)
+      lat <- separate_days(files[[year_count]][,2], grid_count)
+      year <- separate_days(files[[year_count]][,3], grid_count)
+      mon <- separate_days(files[[year_count]][,4], grid_count)
+      day <- separate_days(files[[year_count]][,5], grid_count)
+      precip <- separate_days(files[[year_count]][,6], grid_count)
+      tmax <- separate_days(files[[year_count]][,7], grid_count)
+      tmin <- separate_days(files[[year_count]][,8], grid_count)
       # insert first year as first entry in grid
-      grid[[year_count]] <- year
+      grid[[year_count]] <- cbind(lon, lat, year, mon, day, precip, tmax, tmin)
       # repeat for all years (put process into for loop or apply func)
     }
     all_grids[[grid_count]] <- grid
@@ -443,18 +451,33 @@ for(current_year in seq(1, length(files))){
   updated_files <- append(updated_files, list(file_to_update))
 }
 
+# Convert updated files into grid-based .txt files, and combine year-separated files into single large files for each grid.
+grid_format <- list_grids(updated_files)
+backup_grid_format <- grid_format
+new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/txtformat/"
+setwd(new_path)
+for(index in seq(1, length(merced_indices))){
+  grid_format[[index]] <- do.call(rbind, grid_format[[index]])
+  lat <- toString(round(grid_format[[index]][,"lat"][1], 4))
+  lon <- toString(round(grid_format[[index]][,"lon"][1], 4))
+  write.table(grid_format[[index]], file=paste("data_", lat,"_", lon, ".txt", sep=""), sep="\t", row.names=F)
+}
+
 # summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
 # 20th/80th percentiles of years on. Need this whether or not the first file is the original. 
-summary_stats_orig <- create_summary(files, files)
-summary_stats_updated <- create_summary(updated_files, files)
-# Separate out Merced files to view differences
-merced_stats_final <- summary_stats_updated[unlist(merced_indices),]
-merced_stats_orig <- summary_stats_orig[unlist(merced_indices),]
 
-merced_stats_orig <- apply(merced_stats_orig, MARGIN = 2, unlist)
-merced_stats_final <- apply(merced_stats_final, MARGIN = 2, unlist)
 
-new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
-setwd(new_path)
-write.csv(merced_stats_orig, "merced_stats_orig.csv")
-write.csv(merced_stats_final, "merced_stats_final.csv")
+
+# summary_stats_orig <- create_summary(files, files)
+# summary_stats_updated <- create_summary(updated_files, files)
+# # Separate out Merced files to view differences
+# merced_stats_final <- summary_stats_updated[unlist(merced_indices),]
+# merced_stats_orig <- summary_stats_orig[unlist(merced_indices),]
+# 
+# merced_stats_orig <- apply(merced_stats_orig, MARGIN = 2, unlist)
+# merced_stats_final <- apply(merced_stats_final, MARGIN = 2, unlist)
+# 
+# new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
+# setwd(new_path)
+# write.csv(merced_stats_orig, "merced_stats_orig.csv")
+# write.csv(merced_stats_final, "merced_stats_final.csv")
