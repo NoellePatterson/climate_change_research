@@ -1,5 +1,7 @@
 #################
-### LIBRARIES ###
+# Written by Noelle Patterson, UC Davis Water Management Lab, 2020.
+# Intake gridded annual climate data for California, apply intensity shifts for precipitation
+# in grids representing Merced River Basin, and output the results for Merced River Basin only. 
 #################
 
 
@@ -8,47 +10,49 @@
 #################
 
 separate_days <- function(precip_all_grids, grid_num){
+  # Function takes in native data format (all 4868 CA grids for a year in one long vector,
+  # not directly chronological), and returns a chronologic vector for the grid number specified.
+  # Grid number is any number 1-4868 corresponding to a particular 1/16th degree grid in CA.
   locs = seq(1, length(precip_all_grids), 4868) + grid_num - 1
   grid = precip_all_grids[c(locs)]
   return(grid)
 }
 
-list_grids <- function(files){
-  # function takes all data and reformats into 4868 lists (one for each grid), each 
-  # containing 64 lists (one for each year), each containing a 365/366 day precip trace 
-  all_grids <- vector(mode = "list", length = 4868)
+list_grids <- function(files, merced_indices){
+  # Function takes all original data and reformats into 4868 lists (one for each grid), each 
+  # containing 64 lists (one for each year), with 8 columns of climate data. 
+  all_merced_grids <- vector(mode = "list", length = 100)
   # loop through each grid 
-  for(grid_count in 1:4868){
+  for(grid_count in seq(length(merced_indices))){
     # populate each grid with its 64-yr timeseries
     grid <- vector(mode = "list", length = 64)
     for(year_count in 1:64){
       # Pull out values for all eight columns, can choose which cols to return in output
-      lon <- separate_days(files[[year_count]][,1], grid_count)
-      lat <- separate_days(files[[year_count]][,2], grid_count)
-      year <- separate_days(files[[year_count]][,3], grid_count)
-      mon <- separate_days(files[[year_count]][,4], grid_count)
-      day <- separate_days(files[[year_count]][,5], grid_count)
-      precip <- separate_days(files[[year_count]][,6], grid_count)
-      tmax <- separate_days(files[[year_count]][,7], grid_count)
-      tmin <- separate_days(files[[year_count]][,8], grid_count)
+      lon <- separate_days(files[[year_count]][,1], merced_indices[[grid_count]])
+      lat <- separate_days(files[[year_count]][,2], merced_indices[[grid_count]])
+      year <- separate_days(files[[year_count]][,3], merced_indices[[grid_count]])
+      mon <- separate_days(files[[year_count]][,4], merced_indices[[grid_count]])
+      day <- separate_days(files[[year_count]][,5], merced_indices[[grid_count]])
+      precip <- separate_days(files[[year_count]][,6], merced_indices[[grid_count]])
+      tmax <- separate_days(files[[year_count]][,7], merced_indices[[grid_count]])
+      tmin <- separate_days(files[[year_count]][,8], merced_indices[[grid_count]])
+      temp <- (tmin + tmax)/2 # model requires average temp, caclulate as avg of min and max
       # insert first year as first entry in grid
-      grid[[year_count]] <- cbind(lon, lat, year, mon, day, precip, tmax, tmin)
+      grid[[year_count]] <- cbind(lon, lat, year, mon, day, precip, temp)
       # repeat for all years (put process into for loop or apply func)
     }
-    all_grids[[grid_count]] <- grid
+    all_merced_grids[[grid_count]] <- grid
   }
-  return(all_grids)
+  return(all_merced_grids)
 }
 
 list_grids_merced <- function(files){
-  # function takes all data and reformats into 100 lists (one for each grid), each 
-  # containing 64 lists (one for each year), each containing a 365/366 day precip trace 
+  # Function takes all original data and reformats into 100 lists (one for each Merced grid), 
+  # each containing 64 lists (one for each year), each containing a 365/366 day precip trace. 
   merced <- read.delim(
     "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/Merced_grids_16.txt", header=FALSE, sep="")
   m_lat <- merced[,1]
   m_lon <- merced[,2]
-  test_year <- files[[1]]
-  unique_grids <- test_year[1:4868,]
   # identify merced grids out of the total 4868, save all merced indices in a list
   merced_indices <- list()
   for(index in seq(length(merced[,1]))){
@@ -56,7 +60,6 @@ list_grids_merced <- function(files){
     ind <- rownames(r)
     merced_indices <- append(merced_indices, as.integer(ind))
   }
-  
   # Loop through each grid, then loop through each year, adding the rows for that grid/year
   merced_grids <- list()
   for(grid in merced_indices){
@@ -64,7 +67,7 @@ list_grids_merced <- function(files){
     locs = seq(grid, length(files[[1]][,1]), 4868)
     for(year in seq(length(files))){
       # correct data is every nth row of year file (corresponding to a grid out of 4868 sequence)
-      year_data <- files[[year]][locs, 6]
+      year_data <- files[[year]][locs, 6] # sixth column is precip
       merced_grid <- append(merced_grid, list(year_data))
     } 
     # save all years to grid file once finished
@@ -74,7 +77,7 @@ list_grids_merced <- function(files){
 }
 
 convert_grids_to_files <- function(files, grid_list){
-  # go through each file to update column 6
+  # Function to put grid-based chronologic precip data back into native data format.
   for(file_num in seq(1:length(files))){
     # in each file, go through each grid
     for(grid_num in seq(1:length(grid_list))){
@@ -87,27 +90,28 @@ convert_grids_to_files <- function(files, grid_list){
 }
 
 perc_wet_days_calc <- function(annual_data){
-  # calc the percent of precip in the year's three highest days
+  # Function to calc the percent of precip in the year's three highest days.
   high_days <- rev(sort(annual_data))[1:3]
   high_days_perc <- sum(high_days)/sum(annual_data)
   return(high_days_perc)
 }
 
 perc_wet_months_calc <- function(annual_data){
-  # calc the percentage of precip occuring in Nov-March months
+  # Function to calc the percentage of precip occuring in Nov-March months.
   wet_months_loc <- c(1:91, 306:length(annual_data)) # Nov-March
   wet_month_perc <- sum(annual_data[wet_months_loc])/sum(annual_data)
   return(wet_month_perc)
 }
 
 calc_sd_annual <- function(all_data){
+  # Calculate standard deviation across annual precipitation. 
   year_cums <- unlist(lapply(all_data, sum))
   sd_annual <- sd(year_cums)
   return(sd_annual)
 }
 
 get_perc_20th80th <- function(all_data){
-  # calculate 20th and 80th percentiles across entire POR
+  # calculate 20th and 80th percentiles of annual precip across entire POR (64 years)
   perc_20th <- rep(NA, 4868)
   perc_80th <- rep(NA, 4868)
   for(grid in seq(1:length(perc_20th))){
@@ -120,7 +124,7 @@ get_perc_20th80th <- function(all_data){
 }
 
 calc_metric_20th <- function(all_data, perc_20th){
-  # calc number of years below 20th percentile (of orig precip)
+  # Calc number of years below 20th percentile (of orig precip)
   # perc20th specific to this grid are input as single values
   year_sums <- unlist(lapply(all_data, sum))
   count <- 0
@@ -133,7 +137,7 @@ calc_metric_20th <- function(all_data, perc_20th){
 }
 
 calc_metric_80th <- function(all_data, perc_80th){
-  # calc number of years above 80th percentile (of orig precip)
+  # Calc number of years above 80th percentile (of orig precip)
   # perc80th specific to this grid are input as single values
   year_sums <- unlist(lapply(all_data, sum))
   count <- 0
@@ -146,10 +150,11 @@ calc_metric_80th <- function(all_data, perc_80th){
 }
   
 create_summary <- function(files, orig_files){
+  # Function to calculate summary metrics for adjusted vs. original precip values. 
   # Metric defs: cumulative = total precip in entire POR. 
   # perc_wet_months: percentage of precip in Nov-Mar
   # perc_wet_days: percentate of precip in three highest days of the year
-  # 20th80th_perc: number of years above 80th perc and below 20th perc (percentiles based on original data)
+  # 20th/80th_perc: number of years above 80th perc or below 20th perc (percentiles based on original data)
   summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
                                         "perc_wet_months", "perc_wet_days", "20th_perc", "80th_perc"))
   summary_df$original <- NA
@@ -209,10 +214,10 @@ create_summary <- function(files, orig_files){
 
 intra_precip_manip <- function(annual_precip){
   # Function for modifying precip intensity within a year, input is a one-year precip timeseries
+  # Adjust proportion of precip in wet months while keeping total precip the same. 
   
   # set intensity parameters
   wet_percent = .0556 # val 0-1, percent increase in wet season precip
-  dry_percent = 1 - wet_percent
   highflow_perc = .1435 # val 0-1, percent increase in flow of three highest days
   
   # sum up precip from April - Oct (dry season)
@@ -223,18 +228,17 @@ intra_precip_manip <- function(annual_precip){
   orig_annual_precip <- annual_precip
   orig_wet_precip <- sum(orig_annual_precip[wet])
   annual_cum <- sum(annual_precip)
-  # calculate volume of precip in dry and wet months, end goal
+  # calculate final target of volume of precip in dry and wet months
   final_wet_vol <- orig_wet_precip + (orig_wet_precip * wet_percent)
   final_dry_vol <- annual_cum - final_wet_vol
   
-  # calculate current vol in dry months, and difference to goal
+  # calculate current vol in dry months, and difference to target
   current_dry_vol <- sum(annual_precip[dry])
   dry_diff <- current_dry_vol - final_dry_vol
   perc_dry_reduce <- final_dry_vol/current_dry_vol
   # Apply reduction percentage across all dry season, save harvest amt for later
   annual_precip[dry] <- annual_precip[dry] * perc_dry_reduce
   dry_harvest <- sum(orig_annual_precip[dry] - annual_precip[dry])
-  
   
   # Onto extreme wet days
   # Calc current percent rainfall in 3 highest wet days
@@ -275,8 +279,8 @@ intra_precip_manip <- function(annual_precip){
 interannual_precip_manip <- function(merced_grids){
   # Function for modifying precip intensity across all years, input is entire collection of timeseries
   # intensity parameters
-  orig_perc_low = .4 # val 0-1, avg annual precip value low before shifting precip across years 
-  orig_perc_high = .6 # val 0-1, avg annual precip value high before shifting precip across years 
+  orig_perc_low = .2 # val 0-1, avg annual precip value low before shifting precip across years 
+  orig_perc_high = .69 # val 0-1, avg annual precip value high before shifting precip across years 
   final_perc_low = .2 # val 0-1, avg annual precip value low before shifting precip across years. Must be lower than orig. 
   final_perc_high = .8 # val 0-1, avg annual precip value high before shifting precip across years. Must be higher than orig.
   extreme_shift_low = .03 # val -(0-1), reduce driest years this far below current low
@@ -284,19 +288,19 @@ interannual_precip_manip <- function(merced_grids){
   extreme_shift_percent = 0.05 # val 0-1, number of years corresponding to this percentage will be
     # shifted out to new extremes on min and max
   # To achieve metric in Persad paper, increase occurrence of years in 20th/80th percentage
-  # of precip to get an increased frequency of years in these extreme bins. Assumption for
-  # calc that shift set for the dry season will reflect similarly in the wet years. 
+  # of precip to get an increased frequency of years in these extreme bins. 
   # Separate each grid into a 64-yr timeseries (list of 64 lists)
   
   updated_merced_grids <- merced_grids
   # within 64-yr timeseries for each grid: 
   for(grid_num in seq(1:length(merced_grids))){
     grid <- merced_grids[[grid_num]]
+    
     # assign all years their percentile based on cumsum of precip
     cumsums <- unlist(lapply(grid, sum))
-    # e.g., 20th percentile value before modification
+    # Move dry years from this (higher) percentile val down to final percentile val (e.g., 20th perc)
     orig_dry_threshold <- quantile(cumsums, orig_perc_low)
-    # a higher percentile to lower down to (e.g.) 20th percentile values
+    # Final target to move dry vals down to. Eg., 20th percentile. 
     new_dry_threshold <- quantile(cumsums, final_perc_low)
     # total precip volume to remove from all years in lower-down percentile
     reduction_volume <- orig_dry_threshold-new_dry_threshold
@@ -326,6 +330,7 @@ interannual_precip_manip <- function(merced_grids){
     # if more needed add from middle-ground years
     
     # target wet years to add precip to, split precip harvest among these years
+    # orig wet thresh: a value lower than final wet thresh (making wet season wetter)
     orig_wet_threshold <- quantile(cumsums, orig_perc_high)
     final_wet_threshold <- quantile(cumsums, final_perc_high)
     addition_volume <- final_wet_threshold - orig_wet_threshold
@@ -371,33 +376,18 @@ interannual_precip_manip <- function(merced_grids){
         grid[[year]] <- grid[[year]]*(1-reduction_perc)
       }
     }
-    
-    # calc final distribution of years (years in extremes, 20/80 bins)
-    # make sure you have precip val corresponding to orig 20th and 80th percentiles
-    # first get number of years blw 20 and abv 80, orig
-    # then get number of years blw 20 and abv 80, final
-    # report them out somehow. These vals only calculated once per dataset. Just print for now?
-    updated_cumsums <- unlist(lapply(grid, sum))
-    lower_bin_freq <- length(which(updated_cumsums < orig_dry_threshold))/length(grid)
-    upper_bin_freq <- length(which(updated_cumsums > orig_wet_threshold))/length(grid)
     updated_merced_grids[[grid_num]] <- grid
-    if(all.equal(updated_merced_grids[[grid_num]], merced_grids[[grid_num]])==TRUE){
-      print(grid_num)
-    }
   }
   # Return updated Merced grids
   return(updated_merced_grids)
-  
-  # # convert updated grids back into original (updated) file format
-  # updated_files <- convert_grids_to_files(files, merced_grids)
-  # return(updated_files)
 }
 
 #################
 ##### MAIN ######
 #################
 
-path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/detrended-one-8th-rdata/"
+# Set path to location of input data
+path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/detrended-one-16th-rdata/"
 setwd(path)
 filenames = list.files(pattern="*.rds")
 files = lapply(filenames, readRDS)
@@ -406,18 +396,16 @@ files = lapply(filenames, readRDS)
 # 4868 grids/points total. Loc, date, precip, and temp (as min and max) are included in each row. 
 # I remove precip column for processing. Data is organized by listing the first day of year's data
 # for every grid, then moving to the next date and the next. So to pull out a timeseries for a single 
-# grid, pull out every 4868th data point
+# grid, pull out every 4868th data point.
 
 # Pull out only the grids corresponding to Merced Basin for calculations
 merced_output <- list_grids_merced(files)
 merced_indices <- merced_output[[1]]
 merced_grids <- merced_output[[2]]
 
-# apply interannual (across years) changes before entering into loop
+# apply interannual (across years) changes before entering into loop. Result is in grid format
+# instead of original data format. 
 updated_merced_grids <- interannual_precip_manip(merced_grids)
-# to test:
-# all.equal(merced_grids[[1]][27], updated_merced_grids[[1]][27])
-
 
 updated_files <- list()
 # Perform intraannual changes for all 64 years on updated files (within-year)
@@ -425,9 +413,6 @@ updated_files <- list()
 for(current_year in seq(1, length(files))){ 
   # compile all timeseries for the given year (100 across all Merced grids)
   merced_grids_current_year <- list()
-  
-  # create vector with all precip vals for first year across all merced grids, spaced out
-  # based on their index in the overall file structure
   
   # Update current year file with updated merced grids
   file_to_update <- files[[current_year]]
@@ -445,14 +430,15 @@ for(current_year in seq(1, length(files))){
   }
 
   print(paste(current_year," done"))
-  new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/detrended-one-8th-rdata/"
+  new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/detrended-one-16th-rdata/"
   setwd(new_path)
   saveRDS(file_to_update, paste("updated_precip",filenames[current_year], sep="_"))
   updated_files <- append(updated_files, list(file_to_update))
 }
 
-# Convert updated files into grid-based .txt files, and combine year-separated files into single large files for each grid.
-grid_format <- list_grids(updated_files)
+# Convert updated files into grid-based .txt files, and combine year-separated files into single large files for each grid,
+# for input to hydrologic model. 
+grid_format <- list_grids(updated_files, merced_indices)
 backup_grid_format <- grid_format
 new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/txtformat/"
 setwd(new_path)
@@ -460,24 +446,24 @@ for(index in seq(1, length(merced_indices))){
   grid_format[[index]] <- do.call(rbind, grid_format[[index]])
   lat <- toString(round(grid_format[[index]][,"lat"][1], 4))
   lon <- toString(round(grid_format[[index]][,"lon"][1], 4))
-  write.table(grid_format[[index]], file=paste("data_", lat,"_", lon, ".txt", sep=""), sep="\t", row.names=F)
+  output <- grid_format[[index]][,3:7]
+  write.table(output, file=paste("data_", lat,"_", lon, ".txt", sep=""), sep="\t", row.names=F, col.names=FALSE)
 }
 
 # summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
 # 20th/80th percentiles of years on. Need this whether or not the first file is the original. 
 
 
+summary_stats_orig <- create_summary(files, files)
+summary_stats_updated <- create_summary(updated_files, files)
+# Separate out Merced files to view differences
+merced_stats_final <- summary_stats_updated[unlist(merced_indices),]
+merced_stats_orig <- summary_stats_orig[unlist(merced_indices),]
 
-# summary_stats_orig <- create_summary(files, files)
-# summary_stats_updated <- create_summary(updated_files, files)
-# # Separate out Merced files to view differences
-# merced_stats_final <- summary_stats_updated[unlist(merced_indices),]
-# merced_stats_orig <- summary_stats_orig[unlist(merced_indices),]
-# 
-# merced_stats_orig <- apply(merced_stats_orig, MARGIN = 2, unlist)
-# merced_stats_final <- apply(merced_stats_final, MARGIN = 2, unlist)
-# 
-# new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
-# setwd(new_path)
-# write.csv(merced_stats_orig, "merced_stats_orig.csv")
-# write.csv(merced_stats_final, "merced_stats_final.csv")
+merced_stats_orig <- apply(merced_stats_orig, MARGIN = 2, unlist)
+merced_stats_final <- apply(merced_stats_final, MARGIN = 2, unlist)
+
+new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
+setwd(new_path)
+write.csv(merced_stats_orig, "merced_stats_orig.csv")
+write.csv(merced_stats_final, "merced_stats_final.csv")
