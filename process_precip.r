@@ -18,7 +18,26 @@ separate_days <- function(precip_all_grids, grid_num){
   return(grid)
 }
 
-list_grids <- function(files, merced_indices){
+list_all_grids <- function(files){
+  # Function takes all original data and reformats into 4868 lists (one for each grid), each 
+  # containing 64 lists (one for each year) of precip data. 
+  all_grids <- vector(mode = "list", length = 4868)
+  # loop through each grid 
+  for(grid_count in seq(length(all_grids))){
+    # populate each grid with its 64-yr timeseries
+    grid <- vector(mode = "list", length = 64)
+    for(year_count in 1:64){
+      # Pull out values for precip columns
+      precip <- separate_days(files[[year_count]][,6], grid_count)
+      # insert first year as first entry in grid
+      grid[[year_count]] <- precip
+    }
+    all_grids[[grid_count]] <- grid
+  }
+  return(all_grids)
+}
+
+list_grids_merced <- function(files, merced_indices){
   # Function takes all original data and reformats into 4868 lists (one for each grid), each 
   # containing 64 lists (one for each year), with 8 columns of climate data. 
   all_merced_grids <- vector(mode = "list", length = 100)
@@ -46,13 +65,15 @@ list_grids <- function(files, merced_indices){
   return(all_merced_grids)
 }
 
-list_grids_merced <- function(files){
+list_merced_indices <- function(files){
   # Function takes all original data and reformats into 100 lists (one for each Merced grid), 
   # each containing 64 lists (one for each year), each containing a 365/366 day precip trace. 
   merced <- read.delim(
     "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/Merced_grids_16.txt", header=FALSE, sep="")
   m_lat <- merced[,1]
   m_lon <- merced[,2]
+  test_year <- files[[1]]
+  unique_grids <- test_year[1:4868,]
   # identify merced grids out of the total 4868, save all merced indices in a list
   merced_indices <- list()
   for(index in seq(length(merced[,1]))){
@@ -88,6 +109,31 @@ convert_grids_to_files <- function(files, grid_list){
   } 
   return(files)
 }
+
+add_warmup_years <- function(grid_format){
+  grid_format_updated <- grid_format
+  # find median annual precip year from 64-year datasets (use a representative grid)
+  years <- list(rep(NA, 64))
+  years_total <- rep(years, 100) # summed annual precip across all 100 grids
+  for(grid in seq(length(grid_format))){ # loop thru grids (100)
+    for(year in seq(length(grid_format[[1]]))){ # loop thru years (64)
+      p <- grid_format[[grid]][[year]][,6]
+      p_sum <- sum(p)
+      years_total[[grid]][year] <- p_sum
+    }
+  }
+  add <- function(x) Reduce("+", x)
+  years_total_sums <- add(years_total)
+  med <- median(years_total_sums[1:63]) # Take median of odd-number from dataset, to return a val within the dataset
+  loc <- which(years_total_sums==med)
+  # add median year to beginning of each grid years list, six times
+  for(grid in seq(length(grid_format))){
+    med_grid <- grid_format[[grid]][loc]
+    med_grids <- rep(med_grid, 6)
+    grid_format_updated[[grid]] <- do.call(c, list(med_grids, grid_format[[grid]]))
+  } 
+  return(grid_format_updated)
+} 
 
 perc_wet_days_calc <- function(annual_data){
   # Function to calc the percent of precip in the year's three highest days.
@@ -158,8 +204,8 @@ create_summary <- function(files, orig_files){
   summary_df <- data.frame("Metric" = c("mean", "median", "cumulative", "sd_daily", "sd_annual", 
                                         "perc_wet_months", "perc_wet_days", "20th_perc", "80th_perc"))
   summary_df$original <- NA
-  grid_list <- list_grids(files)
-  grid_list_orig <- list_grids(orig_files)
+  grid_list <- list_all_grids(files)
+  grid_list_orig <- list_all_grids(orig_files)
   # calculate 20th and 80th annual percentiles of original data, to use in 20th/80th calc
   perc_20th_80th <- get_perc_20th80th(grid_list_orig)
   perc_20th_val <- perc_20th_80th[1]
@@ -399,7 +445,7 @@ files = lapply(filenames, readRDS)
 # grid, pull out every 4868th data point.
 
 # Pull out only the grids corresponding to Merced Basin for calculations
-merced_output <- list_grids_merced(files)
+merced_output <- list_merced_indices(files)
 merced_indices <- merced_output[[1]]
 merced_grids <- merced_output[[2]]
 
@@ -408,7 +454,7 @@ merced_grids <- merced_output[[2]]
 updated_merced_grids <- interannual_precip_manip(merced_grids)
 
 updated_files <- list()
-# Perform intraannual changes for all 64 years on updated files (within-year)
+# Perform intraannual changes for all 70 years on updated files (within-year)
 # Loop through years (64)
 for(current_year in seq(1, length(files))){ 
   # compile all timeseries for the given year (100 across all Merced grids)
@@ -432,14 +478,19 @@ for(current_year in seq(1, length(files))){
   print(paste(current_year," done"))
   new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/detrended-one-16th-rdata/"
   setwd(new_path)
-  saveRDS(file_to_update, paste("updated_precip",filenames[current_year], sep="_"))
+  # saveRDS(file_to_update, paste("updated_precip",filenames[current_year], sep="_"))
   updated_files <- append(updated_files, list(file_to_update))
 }
 
 # Convert updated files into grid-based .txt files, and combine year-separated files into single large files for each grid,
 # for input to hydrologic model. 
-grid_format <- list_grids(updated_files, merced_indices)
+grid_format <- list_grids_merced(updated_files, merced_indices)
 backup_grid_format <- grid_format
+
+# Add six years of average data to beginning of dataset to give model a warm-up period. These years will be removed from
+# final results. Dataset now has 70 years of data until the 6 warm-up years are removed. 
+grid_format <- add_warmup_years(grid_format)
+
 new_path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/txtformat/"
 setwd(new_path)
 for(index in seq(1, length(merced_indices))){
@@ -452,7 +503,6 @@ for(index in seq(1, length(merced_indices))){
 
 # summary stats requires two inputs: 1) files to calculate metrics on, and 2) original files to calculate original
 # 20th/80th percentiles of years on. Need this whether or not the first file is the original. 
-
 
 summary_stats_orig <- create_summary(files, files)
 summary_stats_updated <- create_summary(updated_files, files)
