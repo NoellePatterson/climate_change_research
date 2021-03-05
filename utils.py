@@ -2,8 +2,9 @@ import glob
 import pandas as pd
 import numpy as np
 from datetime import timedelta
+import re
 
-def import_ffc_data():
+def import_ffc_data_gage_class():
     class_folders = glob.glob('data_inputs/ffc_metrics_historic/*')
     ffc_dicts = []
     supp_dicts = []
@@ -39,21 +40,24 @@ def import_ffc_data():
             ffc_dicts.append(gage_dict) 
     return ffc_dicts
 
-def import_dwr_data():
-    main_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*flow_result.csv')
-    supp_metric_files = glob.glob('data_inputs/dwr_ffc_results' + '/*supplementary_metrics.csv')
+def import_ffc_data():
+    main_metric_files = glob.glob('data_outputs/FFC_results' + '/*flow_result.csv')
+    supp_metric_files = glob.glob('data_outputs/FFC_results' + '/*supplementary_metrics.csv')
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
         supp_dict = {}
-        supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
+        # supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
+        # import pdb; pdb.set_trace()
+        supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
         supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
         main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
         # create dictionary for each gage named after gage id, with class and metric results inside 
         gage_dict = {}
-        gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
+        # gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
+        gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
         # align supplemental metric file with main metric file, and add info to the main gage dict
         for supp_dict in supp_dicts:
             if supp_dict['gage_id'] == gage_dict['gage_id']:
@@ -63,19 +67,21 @@ def import_dwr_data():
     return ffc_dicts
 
 def import_drh_data():
-    drh_files = glob.glob('data_inputs/dwr_ffc_results' + '/*drh.csv')
+    drh_files = glob.glob('data_outputs/FFC_results' + '/*drh.csv')
     drh_dicts = []
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
-        drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
+        # drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
+        drh_dict['name'] = drh_file.split('/')[2].split('_')[5]
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
 
-    rh_files = glob.glob('data_inputs/dwr_ffc_results' + '/*matrix.csv')
+    rh_files = glob.glob('data_outputs/FFC_results' + '/*matrix.csv')
     rh_dicts = []
     for index, rh_file in enumerate(rh_files):
         rh_dict = {}
-        rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
+        rh_dict['name'] = rh_file.split('/')[2].split('_')[5]
+        # rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
         rh_dict['data'] = pd.read_csv(rh_file, sep=',', index_col=None)
         rh_dicts.append(rh_dict)
         
@@ -160,6 +166,29 @@ def summarize_data_no_classes(results_dicts):
         summary_df.loc[metric, 'Up'] = up_trends
     summary_df.to_csv('data_outputs/mk_summary_dwr.csv')
 
+def create_model_tables(ffc_data):
+    all_results = []
+    metrics_list = ffc_data[0]['ffc_metrics'].index
+    # add metric por averages to each ffc_data model output
+    for index, model in enumerate(ffc_data):
+        metrics = ffc_data[index]['ffc_metrics']
+        metric_avg_por = metrics.mean(axis=1)
+        ffc_data[index]['por_averages'] = metric_avg_por
+    # create final table with avg ffc results for each model
+    run_names = []
+    run_numbers = []
+    output = pd.DataFrame(columns = metrics_list)
+    for index, model in enumerate(ffc_data):
+        output.loc[index] = ffc_data[index]['por_averages']
+        run_names.append(ffc_data[index]['gage_id'])
+        # import pdb; pdb.set_trace()
+        run_numbers.append(int(re.findall(r'\d+', ffc_data[index]['gage_id'])[0]))
+    output['model_run'] = run_names
+    output['run_number'] = run_numbers
+    output = output.sort_values(by = 'run_number')
+    output.drop('run_number', 1, inplace=True)
+    output.to_csv('data_outputs/metrics_summary.csv', index=False)
+    return output
 
 def preprocess_dwr():
     files = glob.glob('data_inputs/DWR_data/*')

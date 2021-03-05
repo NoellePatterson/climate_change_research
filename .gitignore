@@ -1,4 +1,6 @@
 data_outputs
+data_inputs
 my-virtualenv
 runoff_grids
 .Rproj.user
+

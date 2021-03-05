@@ -338,9 +338,9 @@ interannual_precip_manip <- function(merced_grids, run_parameters){
   orig_perc_high <- unlist(run_parameters[[1]]["orig_perc_high"]) # val 0-1, avg annual precip value high before shifting precip across years 
   final_perc_low <- unlist(run_parameters[[1]]["final_perc_low"]) # val 0-1, avg annual precip value low before shifting precip across years. Must be lower than orig. 
   final_perc_high <- unlist(run_parameters[[1]]["final_perc_high"]) # val 0-1, avg annual precip value high before shifting precip across years. Must be higher than orig.
-  extreme_shift_low <- unlist(run_parameters[[1]]["extreme_shift_low"]) # val -(0-1), reduce driest years this far below current low
-  extreme_shift_high <- unlist(run_parameters[[1]]["extreme_shift_high"]) # val 0-1, raise highest years this far above current high
-  extreme_shift_percent <- unlist(run_parameters[[1]]["extreme_shift_percent"]) # val 0-1, number of years corresponding to this percentage will be
+  extreme_shift_low <- as.numeric(unlist(run_parameters[[1]]["extreme_shift_low"])) # val -(0-1), reduce driest years this far below current low
+  extreme_shift_high <- as.numeric(unlist(run_parameters[[1]]["extreme_shift_high"])) # val 0-1, raise highest years this far above current high
+  extreme_shift_percent <- as.numeric(unlist(run_parameters[[1]]["extreme_shift_percent"])) # val 0-1, number of years corresponding to this percentage will be
   # shifted out to new extremes on min and max
   # To achieve metric in Persad paper, increase occurrence of years in 20th/80th percentage
   # of precip to get an increased frequency of years in these extreme bins. 
@@ -416,7 +416,7 @@ interannual_precip_manip <- function(merced_grids, run_parameters){
     total_wet_take <- total_wet_addition + extreme_wet_addition
     remaining_take <- total_wet_take - precip_harvest
     if(remaining_take[[1]] <= 0){
-      next
+      
     } else {
       # For remaining surplus of wet addition, get there from taking flow off middle years
       take_each_year <- remaining_take/10 # pick a number?
@@ -442,7 +442,7 @@ interannual_precip_manip <- function(merced_grids, run_parameters){
 #################
 
 # Load run parameters
-for(run_number in 14:19){
+for(run_number in 14:17){
   print(paste("run number", run_number))
   run_parameters <- set_run_parameters(run_number)
   
@@ -532,3 +532,14 @@ for(run_number in 14:19){
   # write.csv(merced_stats_orig, "merced_stats_orig.csv")
   # write.csv(merced_stats_final, "merced_stats_final.csv")
 }
+
+# Testing difference amoung model outputs
+path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
+path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/SAC_SMA_outputs/"
+setwd(path)
+flow1 = read.delim("SACSMA_DT0_DP1_MRC_full_run1.txt")
+flow10 = read.delim("SACSMA_DT0_DP1_MRC_full_run10.txt")
+run1 = read.delim("txtformat_run11/data_37.4688_-119.4688.txt", header=FALSE)
+run10 = read.delim("txtformat_run10/data_37.4688_-119.4688.txt", header=FALSE)
+all.equal(flow1, flow10)
+all.equal(run1, run10)
