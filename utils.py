@@ -1,8 +1,10 @@
+import os
 import glob
 import pandas as pd
 import numpy as np
 from datetime import timedelta
 import re
+from PIL import Image
 
 def import_ffc_data_gage_class():
     class_folders = glob.glob('data_inputs/ffc_metrics_historic/*')
@@ -205,3 +207,24 @@ def preprocess_dwr():
             df.loc[index, 'date'] -= timedelta(days=365.24*100)
         df['date'] = df['date'].dt.strftime('%m/%d/%Y')
         df.to_csv('data_outputs/'+file, index=False)
+
+def combine_image():
+    contrl_img_files = glob.glob('data_inputs/annual_plots_run1/*')
+    exp_img_files = glob.glob('data_inputs/annual_plots_run26/*')
+    def sort_key(s):
+        return int(re.findall("(\d+)",s.split('_')[-1])[0])
+    contrl_img_files.sort(key=sort_key)
+    exp_img_files.sort(key=sort_key)
+    # import pdb; pdb.set_trace()
+    def get_concat_h(im1, im2):
+        dst = Image.new('RGB', (im1.width + im2.width, im1.height))
+        dst.paste(im1, (0, 0))
+        dst.paste(im2, (im1.width, 0))
+        return dst
+
+    for index in range(len(contrl_img_files)):
+        im1 = Image.open(contrl_img_files[index])
+        im2 = Image.open(exp_img_files[index])
+        get_concat_h(im1, im2).save('data_outputs/annual_plots_allintensity/year{}.jpg'.format(index))
+
+    # loop through, create new image file and add corresponding years too it

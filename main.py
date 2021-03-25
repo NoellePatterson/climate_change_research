@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import numpy as np
 from utils import import_ffc_data, import_ffc_data, import_drh_data, make_results_dicts, summarize_data, summarize_data_no_classes, \
-make_summary_dicts, preprocess_dwr, create_model_tables
+make_summary_dicts, preprocess_dwr, create_model_tables, combine_image
 from trends import calc_mk_trend
 from hydrograph import hydrograph
 from planning_horizons import planning_horizon
@@ -23,8 +23,9 @@ ffc_data = import_ffc_data()
 # rh_plot = plot_rh(rh_data)
 # line_plots = line_plots(ffc_data)
 # scatter_plot = scatterplot(ffc_data)
+result = combine_image()
 # boxplot = boxplot(ffc_data)
-jitterplot = jitterplot(ffc_data)
+# jitterplot = jitterplot(ffc_data)
 
 # Generate annotated hydrographs of DWR modeled flow data
 # planning_horizon_data = planning_horizon(ffc_data)

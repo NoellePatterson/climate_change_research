@@ -304,46 +304,32 @@ def scatterplot(ffc_data):
     for index, run in enumerate(ffc_data):
         if run['gage_id'] == 'run1':
             run1 = run
-        if run['gage_id'] == 'run2':
-            run2 = run
-        if run['gage_id'] == 'run3':
-            run3 = run
-        if run['gage_id'] == 'run4':
-            run4 = run
-        if run['gage_id'] == 'run5':
-            run5 = run
-    runs = [run2, run3, run4, run5]
-    # import pdb; pdb.set_trace()
-    mag_metric = 'Wet_BFL_Mag_50' # FA_Mag' , 'Wet_BFL_Mag_50' , 'SP_Mag' , DS_Mag_50
-    time_metric = 'Wet_Tim' # 'FA_Tim' , 'Wet_Tim' , 'SP_Tim' , DS_Tim
+        if run['gage_id'] == 'run25':
+            exp = run
+    title = 'Extreme High'
+    mag_metric = 'DS_Mag_50' # FA_Mag' , 'Wet_BFL_Mag_50' , 'SP_Mag' , DS_Mag_50
+    time_metric = 'DS_Tim' # 'FA_Tim' , 'Wet_Tim' , 'SP_Tim' , DS_Tim
     dsmag_control = np.nanmean(pd.to_numeric(run1['ffc_metrics'].loc[mag_metric], errors='coerce'))
     dstim_control = np.nanmean(pd.to_numeric(run1['ffc_metrics'].loc[time_metric], errors='coerce'))
 
     fig, ax = plt.subplots(figsize=(8,8))
     contl_x = pd.to_numeric(run1['ffc_metrics'].loc[time_metric], errors='coerce')
     contl_y = pd.to_numeric(run1['ffc_metrics'].loc[mag_metric], errors='coerce')
-    ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
+    # ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
     # ax.set_ylim(-100, 7500) # fall: max 8600 , wet: max 7500 , sp: max 60000 , dry: 700
     # ax.set_xlim(-1, 185) # fall: (-1, 60) , wet: (-1, 185) , sp: (50, 350) , dry: (230, 395)
 
-    for idex, run in enumerate(runs):
-        name = run['gage_id']
-        if name == '0.8': 
-            color = '#eb9800' # orange
-        elif name == '0.9': 
-            color = '#ffe3b1' # light orange
-        elif name == 'run2': 
-            color = '#f6fbff' # very light blue
-        elif name == 'run3': 
-            color = '#cfeaff' # light blue
-        elif name == 'run4':
-            color = '#1e9bff' # medium blue
-        elif name == 'run5':
-            color = '#005da8' # dark blue
-        # import pdb; pdb.set_trace()
-        x = pd.to_numeric(run['ffc_metrics'].loc[time_metric], errors='coerce')
-        y = pd.to_numeric(run['ffc_metrics'].loc[mag_metric], errors='coerce')
-        ax.scatter(x, y, color=color, edgecolors='black', label=name)
+    x = pd.to_numeric(exp['ffc_metrics'].loc[time_metric], errors='coerce')
+    y = pd.to_numeric(exp['ffc_metrics'].loc[mag_metric], errors='coerce')
+
+    for i in range(len(contl_x)):
+        plt.plot([contl_x[i],x[i]], [contl_y[i],y[i]], color='grey')
+        plt.scatter(contl_x[i], contl_y[i], marker='o', color='blue', zorder=2)
+        plt.scatter(x[i], y[i], marker='o', color='red', zorder=2)
+
+    # plot scatters one more time to make marker labels
+    plt.scatter(contl_x[0], contl_y[0], marker='o', color='blue', zorder=2, label='control')
+    plt.scatter(x[0], y[0], marker='o', color='red', zorder=2, label='max intensity')
     plt.axhline(y=dsmag_control, ls='--', color='black', label='Average control timing')
     plt.axvline(x=dstim_control, ls=':', color='black', label='Average control magnitude')
     # import pdb; pdb.set_trace()
@@ -355,11 +341,11 @@ def scatterplot(ffc_data):
 
     plt.legend(fancybox=True, borderaxespad = .9, fontsize='small', labelspacing=.2, columnspacing=1, markerscale=.5)
     
-    plt.ylabel("Wet Season Magnitude")
-    plt.xlabel("Wet Season Timing")
-    plt.title("Wet Season Intensity")
+    plt.ylabel("Dry Season Magnitude")
+    plt.xlabel("Dry Season Timing")
+    plt.title(title)
     
-    fig.savefig('data_outputs/plots/scatter/wet_tim_mag_intensity_shift.pdf')
+    fig.savefig('data_outputs/plots/scatter/dry_tim_mag_intensity_shift_extremehigh.pdf')
     # plt.show()
     # import pdb; pdb.set_trace()
 

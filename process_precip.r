@@ -442,7 +442,7 @@ interannual_precip_manip <- function(merced_grids, run_parameters){
 #################
 
 # Load run parameters
-for(run_number in 14:17){
+for(run_number in 18:26){
   print(paste("run number", run_number))
   run_parameters <- set_run_parameters(run_number)
   
