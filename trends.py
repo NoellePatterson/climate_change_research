@@ -10,7 +10,8 @@ import statsmodels.formula.api as smf
 Calculate Mann-Kendall trends in input flow data processed by the functional flows calculator
 '''
 
-def calc_mk_trend(ffc_data, results_dicts):
+def calc_mk_trend(ffc_data, results_dicts, model_name):
+    print(model_name)
     # loop through each gage (223 total)
     for gage_index, gage in enumerate(ffc_data):
         # create two new columns for output data
@@ -61,6 +62,11 @@ def calc_mk_trend(ffc_data, results_dicts):
                         results_dicts[gage_index]['results'].loc[value, 'mk_decision'] = 'no trend'
                         results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = np.nan  
 
+    metrics = results_dicts[0]['results'].index
+    summary_df = pd.DataFrame(index=metrics)
+    for index, site in enumerate(results_dicts):
+        summary_df[site['gage_id']] = site['results']['mk_decision']
+    summary_df.to_csv('data_outputs/mk_summary_'+ model_name +'.csv')
     return results_dicts
 
 def mk_and_ljung(array):

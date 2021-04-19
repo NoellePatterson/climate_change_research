@@ -42,16 +42,17 @@ def import_ffc_data_gage_class():
             ffc_dicts.append(gage_dict) 
     return ffc_dicts
 
-def import_ffc_data():
-    main_metric_files = glob.glob('data_outputs/FFC_results' + '/*flow_result.csv')
-    supp_metric_files = glob.glob('data_outputs/FFC_results' + '/*supplementary_metrics.csv')
+def import_ffc_data(model_folder):
+    model_name = model_folder.split('/')[2]
+    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/*/' + '/*flow_result.csv'))
+    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/*/' + '/*supplementary_metrics.csv'))
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
         supp_dict = {}
         # supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
-        # import pdb; pdb.set_trace()
-        supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
+        # supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
+        supp_dict['gage_id'] = supp_file.split('/')[3][:-26]
         supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
@@ -59,14 +60,15 @@ def import_ffc_data():
         # create dictionary for each gage named after gage id, with class and metric results inside 
         gage_dict = {}
         # gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
-        gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
+        # gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
+        gage_dict['gage_id'] = metric_file.split('/')[3][:-23]
         # align supplemental metric file with main metric file, and add info to the main gage dict
         for supp_dict in supp_dicts:
             if supp_dict['gage_id'] == gage_dict['gage_id']:
                 # add supp_dict metrics to gage_dict metrics
                 gage_dict['ffc_metrics'] = pd.concat([main_metrics, supp_dict['supp_metrics']], axis=0)
         ffc_dicts.append(gage_dict)
-    return ffc_dicts
+    return ffc_dicts, model_name
 
 def import_drh_data():
     drh_files = glob.glob('data_outputs/FFC_results' + '/*drh.csv')
@@ -146,6 +148,7 @@ def summarize_data(results_dicts):
     summary_df.to_csv('data_outputs/mk_summary.csv')
 
 def summarize_data_no_classes(results_dicts):
+    import pdb; pdb.set_trace()
     metrics = results_dicts[0]['results'].index
     summary_df = pd.DataFrame(index=metrics)
     summary_df['Down'] = np.nan
@@ -227,4 +230,41 @@ def combine_image():
         im2 = Image.open(exp_img_files[index])
         get_concat_h(im1, im2).save('data_outputs/annual_plots_allintensity/year{}.jpg'.format(index))
 
-    # loop through, create new image file and add corresponding years too it
+def combine_mk_model_stats():
+    files = glob.glob('data_outputs/MK_outputs_all_models/*')
+    mk_files_45 = []
+    mk_files_85 = []
+    for file in files:
+        stats = pd.read_csv(file)
+        stats = stats.set_index('Year')
+        if '45' in file:
+            mk_files_45.append(stats)
+        elif '85' in file:
+            mk_files_85.append(stats)
+    # create final output table to compile all results
+    metrics = stats.index
+    locations = stats.columns
+    mk_output_45 = pd.DataFrame(0, index=metrics, columns=locations)
+    mk_output_85 = pd.DataFrame(0, index=metrics, columns=locations)
+    # loop through each file, convert character values to numbers 
+    for mk_file in mk_files_45:
+        mk_file = mk_file.replace('decreasing', -1)
+        mk_file = mk_file.replace('no trend', 0)
+        mk_file = mk_file.replace('increasing', 1)
+        mk_output_45 = mk_output_45.add(mk_file)
+    for mk_file in mk_files_85:
+        mk_file = mk_file.replace('decreasing', -1)
+        mk_file = mk_file.replace('no trend', 0)
+        mk_file = mk_file.replace('increasing', 1)
+        mk_output_85 = mk_output_85.add(mk_file)
+        # import pdb; pdb.set_trace()
+    mk_output_45.to_csv('data_outputs/All_MK_results_RCP4.5.csv')
+    mk_output_85.to_csv('data_outputs/All_MK_results_RCP8.5.csv')
+    # matrix addition until all dfs added up
+    return()
+
+
+
+    
+
+
