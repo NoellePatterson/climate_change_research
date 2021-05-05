@@ -70,8 +70,9 @@ def import_ffc_data(model_folder):
         ffc_dicts.append(gage_dict)
     return ffc_dicts, model_name
 
-def import_drh_data():
-    drh_files = glob.glob('data_outputs/FFC_results' + '/*drh.csv')
+def import_drh_data(model_folder):
+    model_name = model_folder.split('/')[2]
+    drh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*drh.csv')
     drh_dicts = []
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
@@ -80,7 +81,7 @@ def import_drh_data():
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
 
-    rh_files = glob.glob('data_outputs/FFC_results' + '/*matrix.csv')
+    rh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*matrix.csv')
     rh_dicts = []
     for index, rh_file in enumerate(rh_files):
         rh_dict = {}

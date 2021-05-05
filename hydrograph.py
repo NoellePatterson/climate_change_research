@@ -2,6 +2,18 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+def site_hydrograph(ffc_data, rh_data):
+    import pdb; pdb.set_trace()
+    for gage_index, gage in enumerate(ffc_data):
+        a=1
+
+
+# narrow down for sites of interest
+# average values across all models
+# separate values into historic and future
+# plot rh lines for med, 25/75th. 
+# overlay critical values: timings and mags. 
+
 def define_fill_points(year_type, percent, spmed_y, sp_rocmed_y):
     ws_x = year_type.loc['Wet_Tim_'+percent]
     pre_sp_x = year_type.loc['SP_Tim_'+percent]-60

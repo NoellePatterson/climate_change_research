@@ -14,14 +14,17 @@ from planning_horizons import planning_horizon
 
 model_folders = glob.glob('data_outputs/FFC_results/*')
 ffc_data_all = []
-
+rh_data_all = []
 # test = gini_index_mk_trends()
 for folder in model_folders:
     # run with FFC outputs (copy and paste from FFC) to combine results files and convert to useable format. Use natural flow class #2 
     ffc_data, model_name = import_ffc_data(folder)
     for data in ffc_data:
         ffc_data_all.append(data)
-summary = create_model_tables(ffc_data_all)
+    drh_data, rh_data = import_drh_data()
+    for data in rh_data:
+        rh_data_all.append(data)
+hydro = site_hydrograph(ffc_data_all, rh_data_all)
 #     # Use FFC output files to prepare data for plotting 
 #     # drh_data, rh_data = import_drh_data()
 
