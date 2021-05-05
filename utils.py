@@ -44,8 +44,8 @@ def import_ffc_data_gage_class():
 
 def import_ffc_data(model_folder):
     model_name = model_folder.split('/')[2]
-    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/*/' + '/*flow_result.csv'))
-    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/*/' + '/*supplementary_metrics.csv'))
+    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv'))
+    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv'))
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
@@ -172,28 +172,42 @@ def summarize_data_no_classes(results_dicts):
     summary_df.to_csv('data_outputs/mk_summary_dwr.csv')
 
 def create_model_tables(ffc_data):
-    all_results = []
     metrics_list = ffc_data[0]['ffc_metrics'].index
+    all_hist = pd.DataFrame(columns = metrics_list)
+    all_fut = pd.DataFrame(columns = metrics_list)
     # add metric por averages to each ffc_data model output
     for index, model in enumerate(ffc_data):
         metrics = ffc_data[index]['ffc_metrics']
+        metrics_hist = metrics.iloc[:,0:65] # years 1950-2015
+        metrics_fut = metrics.iloc[:,85:150] # years 2035-2100
         metric_avg_por = metrics.mean(axis=1)
-        ffc_data[index]['por_averages'] = metric_avg_por
-    # create final table with avg ffc results for each model
-    run_names = []
-    run_numbers = []
+
+        all_hist = all_hist.append(metrics_hist.mean(axis=1), ignore_index=True)
+        all_fut = all_fut.append(metrics_fut.mean(axis=1), ignore_index=True)
+    # to summarize all results together
     output = pd.DataFrame(columns = metrics_list)
-    for index, model in enumerate(ffc_data):
-        output.loc[index] = ffc_data[index]['por_averages']
-        run_names.append(ffc_data[index]['gage_id'])
-        # import pdb; pdb.set_trace()
-        run_numbers.append(int(re.findall(r'\d+', ffc_data[index]['gage_id'])[0]))
-    output['model_run'] = run_names
-    output['run_number'] = run_numbers
-    output = output.sort_values(by = 'run_number')
-    output.drop('run_number', 1, inplace=True)
-    output.to_csv('data_outputs/metrics_summary.csv', index=False)
-    return output
+    import pdb; pdb.set_trace()
+    all_hist = all_hist.mean(axis=0)
+    all_fut = all_fut.mean(axis=0)
+    all_fut.to_csv('all_metrics_future.csv')
+    
+
+
+    # # create final table with avg ffc results for each model
+    # run_names = []
+    # run_numbers = []
+    # output = pd.DataFrame(columns = metrics_list)
+    # for index, model in enumerate(ffc_data):
+    #     output.loc[index] = ffc_data[index]['por_averages']
+    #     run_names.append(ffc_data[index]['gage_id'])
+    #     # import pdb; pdb.set_trace()
+    #     run_numbers.append(int(re.findall(r'\d+', ffc_data[index]['gage_id'])[0]))
+    # output['model_run'] = run_names
+    # output['run_number'] = run_numbers
+    # output = output.sort_values(by = 'run_number')
+    # output.drop('run_number', 1, inplace=True)
+    # output.to_csv('data_outputs/metrics_summary.csv', index=False)
+    # return output
 
 def preprocess_dwr():
     files = glob.glob('data_inputs/DWR_data/*')
@@ -262,6 +276,49 @@ def combine_mk_model_stats():
     mk_output_85.to_csv('data_outputs/All_MK_results_RCP8.5.csv')
     # matrix addition until all dfs added up
     return()
+
+def gini_index_mk_trends():
+    files = glob.glob('data_outputs/MK_outputs_all_models/*')
+    mk_files_45 = []
+    mk_files_85 = []
+    for file in files:
+        stats = pd.read_csv(file)
+        stats = stats.set_index('Year')
+        temp_dict = {}
+        if '45' in file:
+            temp_dict['model_name'] = file.split('/')[2][:-4]
+            temp_dict['data'] = stats
+            mk_files_45.append(temp_dict)
+        elif '85' in file:
+            temp_dict['model_name'] = file.split('/')[2][:-4]
+            temp_dict['data'] = stats
+            mk_files_85.append(temp_dict)
+    metrics = mk_files_45[0]['data'].index
+    all_dfs = pd.DataFrame(index=metrics)
+    for mk_file in mk_files_85:
+        name = mk_file['model_name'][11:]
+        df = pd.DataFrame(0, index=metrics, columns=['gini_index'])
+        for metric in metrics:
+            inc = 0 
+            dec = 0 
+            same = 0
+            for trend in mk_file['data'].loc[metric]:
+                if trend == 'increasing':
+                    inc += 1
+                elif trend == 'decreasing':
+                    dec += 1
+                elif trend == 'no trend':
+                    same += 1
+            tot = inc + dec + same
+            gini = 1 - ((inc/tot)**2 + (dec/tot)**2 + (same/tot)**2)
+            gini_perc = 100*(1 - gini/(2/3))
+            df.loc[metric] = gini_perc
+        df.to_csv('data_outputs/Gini_trends_'+ name +'.csv')
+        all_dfs[name] = df
+    all_dfs.to_csv('data_outputs/Gini_trends_RCP8.5.csv')
+    import pdb; pdb.set_trace()
+    # save each model's df
+    # create a final summary df with all gini's averaged across models. 
 
 
 
