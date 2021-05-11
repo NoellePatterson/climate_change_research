@@ -77,19 +77,19 @@ def import_drh_data(model_folder):
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
         # drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
-        drh_dict['name'] = drh_file.split('/')[2].split('_')[5]
+        
+        drh_dict['name'] = drh_file.split('/')[3][:-8]
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
 
     rh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*matrix.csv')
     rh_dicts = []
     for index, rh_file in enumerate(rh_files):
-        rh_dict = {}
-        rh_dict['name'] = rh_file.split('/')[2].split('_')[5]
+        rh_dict = {} 
+        rh_dict['name'] = rh_file.split('/')[3][:-23]
         # rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
         rh_dict['data'] = pd.read_csv(rh_file, sep=',', index_col=None)
         rh_dicts.append(rh_dict)
-        
     return drh_dicts, rh_dicts
         
 def make_summary_dicts(ffc_data):
@@ -321,7 +321,25 @@ def gini_index_mk_trends():
     # save each model's df
     # create a final summary df with all gini's averaged across models. 
 
-
+def get_site_hydrograph_data(ffc_data, rh_data):
+    # import pdb; pdb.set_trace()
+    # narrow down for sites of interest
+    def get_site_data(dataset, search_key):
+        macclure = []
+        battle = []
+        englebright = []
+        for site_index, site in enumerate(dataset):
+            import pdb; pdb.set_trace()
+            if site[search_key] == 'I20____Lake_McClure_Inflow_calsim_and_wytypes':
+                macclure.append(site[search_key])
+            elif site[search_key] == 'I10803_Battle_Creek_Inflow_to_Sacramento_River_calsim':
+                site.append(site[search_key])
+            elif gage[search_key] == '11418000_Englebright_Stern_and_wytypes':
+                englebright.append(site[search_key])
+        return(macclure, battle, englebright)
+    
+    macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'ffc_metrics')
+    macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'data')
 
     
 
