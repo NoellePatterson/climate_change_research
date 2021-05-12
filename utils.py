@@ -77,7 +77,6 @@ def import_drh_data(model_folder):
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
         # drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
-        
         drh_dict['name'] = drh_file.split('/')[3][:-8]
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
