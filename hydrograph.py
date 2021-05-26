@@ -21,94 +21,98 @@ def site_hydrograph(ffc_data, rh_data):
     
     macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics')
     macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data')
+
+    
     
     # start with macclure, then apply to all
     # replace all Nones with row avg, so average across all df's will work
-    for model_index, model in enumerate(macclure_ffc):  
-        macclure_ffc[model_index] = macclure_ffc[model_index].replace('None', np.nan)
-        for row in macclure_ffc[0].index:
-            macclure_ffc[model_index].loc[row] = macclure_ffc[model_index].loc[row].fillna(value=np.nanmean(pd.to_numeric(macclure_ffc[model_index].loc[row])))
-    macclure_ffc_avg = pd.DataFrame(0, index=macclure_ffc[0].index, columns = macclure_ffc[0].columns)
-    for model in macclure_ffc:
-        macclure_ffc_avg = macclure_ffc_avg.add(model.apply(pd.to_numeric))
-    macclure_ffc_avg = macclure_ffc_avg.divide(10)
+    def site_hydrograph_plotter(site_ffc, site_rh):
+        for model_index, model in enumerate(site_ffc):  
+            site_ffc[model_index] = site_ffc[model_index].replace('None', np.nan)
+            for row in site_ffc[0].index:
+                site_ffc[model_index].loc[row] = site_ffc[model_index].loc[row].fillna(value=np.nanmean(pd.to_numeric(site_ffc[model_index].loc[row])))
+        site_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = site_ffc[0].columns)
+        for model in site_ffc:
+            site_ffc_avg = site_ffc_avg.add(model.apply(pd.to_numeric))
+        site_ffc_avg = site_ffc_avg.divide(10)
 
-    for model_index, model in enumerate(macclure_rh):  
-        macclure_rh[model_index] = macclure_rh[model_index].replace('None', np.nan)
-    macclure_rh_avg = pd.DataFrame(0, index=macclure_rh[0].index, columns = macclure_rh[0].columns)
-    for model in macclure_rh:
-        macclure_rh_avg = macclure_rh_avg.add(model.apply(pd.to_numeric))
-    macclure_rh_avg = macclure_rh_avg.divide(10)   
+        for model_index, model in enumerate(site_rh):  
+            site_rh[model_index] = site_rh[model_index].replace('None', np.nan)
+        site_rh_avg = pd.DataFrame(0, index=site_rh[0].index, columns = site_rh[0].columns)
+        for model in site_rh:
+            site_rh_avg = site_rh_avg.add(model.apply(pd.to_numeric))
+        site_rh_avg = site_rh_avg.divide(10)   
 
-    macclure_ffc_hist = macclure_ffc_avg.iloc[:, 0:65] # 1950-2015
-    macclure_ffc_fut = macclure_ffc_avg.iloc[:, 85:150] # 2035-2100
-    macclure_rh_hist = macclure_rh_avg.iloc[:, 0:65]
-    macclure_rh_fut = macclure_rh_avg.iloc[:, 85:150]
+        site_ffc_hist = site_ffc_avg.iloc[:, 0:65] # 1950-2015
+        site_ffc_fut = site_ffc_avg.iloc[:, 85:150] # 2035-2100
+        site_rh_hist = site_rh_avg.iloc[:, 0:65] # 1950-2015
+        site_rh_fut = site_rh_avg.iloc[:, 85:150] # 2035-2100
 
-    rh_hist = {}
-    rh_fut = {}
-    percentile_keys = ['twenty_five', 'fifty', 'seventy_five']
-    percentiles = [25, 50, 75]
-    for index, percentile in enumerate(percentile_keys):
-        rh_hist[percentile] = []
-        rh_fut[percentile] = []
-    for row_index, _ in enumerate(macclure_rh_hist.iloc[:,0]): # loop through each row, 366 total
-            # loop through all 3 percentiles
-            for index, percentile in enumerate(percentiles): 
-                # calc flow percentiles across all years for each row of flow matrix
-                flow_row_hist = pd.to_numeric(macclure_rh_hist.iloc[row_index, :], errors='coerce')
-                rh_hist[percentile_keys[index]].append(np.nanpercentile(flow_row_hist, percentile))
-                flow_row_fut = pd.to_numeric(macclure_rh_fut.iloc[row_index, :], errors='coerce')
-                rh_fut[percentile_keys[index]].append(np.nanpercentile(flow_row_fut, percentile))
-    np.nanmax(pd.to_numeric(macclure_rh[7].iloc[:,100]))
-    fig, ax = plt.subplots()
-    x = np.arange(0,366,1)
-    month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
-    month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    ax.plot(rh_hist['fifty'], color = 'navy', label = "Historic (1950-2015)", linewidth=2)
-    plt.fill_between(x, rh_hist['twenty_five'], rh_hist['fifty'], color='powderblue', alpha=.5)
-    plt.fill_between(x, rh_hist['fifty'], rh_hist['seventy_five'], color='powderblue', alpha=.5)
+        rh_hist = {}
+        rh_fut = {}
+        percentile_keys = ['twenty_five', 'fifty', 'seventy_five']
+        percentiles = [25, 50, 75]
+        for index, percentile in enumerate(percentile_keys):
+            rh_hist[percentile] = []
+            rh_fut[percentile] = []
+        for row_index, _ in enumerate(site_rh_hist.iloc[:,0]): # loop through each row, 366 total
+                # loop through all 3 percentiles
+                for index, percentile in enumerate(percentiles): 
+                    # calc flow percentiles across all years for each row of flow matrix
+                    flow_row_hist = pd.to_numeric(site_rh_hist.iloc[row_index, :], errors='coerce')
+                    rh_hist[percentile_keys[index]].append(np.nanpercentile(flow_row_hist, percentile))
+                    flow_row_fut = pd.to_numeric(site_rh_fut.iloc[row_index, :], errors='coerce')
+                    rh_fut[percentile_keys[index]].append(np.nanpercentile(flow_row_fut, percentile))
+        np.nanmax(pd.to_numeric(site_rh[7].iloc[:,100]))
+        fig, ax = plt.subplots()
+        x = np.arange(0,366,1)
+        month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
+        month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+        ax.plot(rh_hist['fifty'], color = 'navy', label = "Historic (1950-2015)", linewidth=2)
+        plt.fill_between(x, rh_hist['twenty_five'], rh_hist['fifty'], color='powderblue', alpha=.5)
+        plt.fill_between(x, rh_hist['fifty'], rh_hist['seventy_five'], color='powderblue', alpha=.5)
 
-    ax.plot(rh_fut['fifty'], color = 'darkred', label = "Future (2035-2100)", linewidth=2)
-    plt.fill_between(x, rh_fut['twenty_five'], rh_fut['fifty'], color='lightpink', alpha=.5)
-    plt.fill_between(x, rh_fut['fifty'], rh_fut['seventy_five'], color='lightpink', alpha=.5)
+        ax.plot(rh_fut['fifty'], color = 'darkred', label = "Future (2035-2100)", linewidth=2)
+        plt.fill_between(x, rh_fut['twenty_five'], rh_fut['fifty'], color='lightpink', alpha=.5)
+        plt.fill_between(x, rh_fut['fifty'], rh_fut['seventy_five'], color='lightpink', alpha=.5)
 
-    # add plot anotations using ffc metrics
-    
-    ds_tim_hist = np.nanmean(macclure_ffc_hist.loc['DS_Tim'])
-    sp_tim_hist = np.nanmean(macclure_ffc_hist.loc['SP_Tim'])
-    wet_tim_hist = np.nanmean(macclure_ffc_hist.loc['Wet_Tim'])
-    fa_tim_hist = np.nanmean(macclure_ffc_hist.loc['FA_Tim'])
-    ds_mag_hist = np.nanmean(macclure_ffc_hist.loc['DS_Mag_50'])
-    wet_mag_hist = np.nanmean(macclure_ffc_hist.loc['Wet_BFL_Mag_50'])
+        # add plot anotations using ffc metrics
+        
+        ds_tim_hist = np.nanmean(site_ffc_hist.loc['DS_Tim'])
+        sp_tim_hist = np.nanmean(site_ffc_hist.loc['SP_Tim'])
+        wet_tim_hist = np.nanmean(site_ffc_hist.loc['Wet_Tim'])
+        fa_tim_hist = np.nanmean(site_ffc_hist.loc['FA_Tim'])
+        ds_mag_hist = np.nanmean(site_ffc_hist.loc['DS_Mag_50'])
+        wet_mag_hist = np.nanmean(site_ffc_hist.loc['Wet_BFL_Mag_50'])
 
-    ds_tim_fut = np.nanmean(macclure_ffc_fut.loc['DS_Tim'])
-    sp_tim_fut = np.nanmean(macclure_ffc_fut.loc['SP_Tim'])
-    wet_tim_fut = np.nanmean(macclure_ffc_fut.loc['Wet_Tim'])
-    fa_tim_fut = np.nanmean(macclure_ffc_fut.loc['FA_Tim'])
-    ds_mag_fut = np.nanmean(macclure_ffc_fut.loc['DS_Mag_50'])
-    wet_mag_fut = np.nanmean(macclure_ffc_fut.loc['Wet_BFL_Mag_50'])
-    np.nanmean(macclure_ffc_fut.loc['SP_Mag'])
-    np.nanmean(macclure_ffc_hist.loc['SP_Mag'])
+        ds_tim_fut = np.nanmean(site_ffc_fut.loc['DS_Tim'])
+        sp_tim_fut = np.nanmean(site_ffc_fut.loc['SP_Tim'])
+        wet_tim_fut = np.nanmean(site_ffc_fut.loc['Wet_Tim'])
+        fa_tim_fut = np.nanmean(site_ffc_fut.loc['FA_Tim'])
+        ds_mag_fut = np.nanmean(site_ffc_fut.loc['DS_Mag_50'])
+        wet_mag_fut = np.nanmean(site_ffc_fut.loc['Wet_BFL_Mag_50'])
+        np.nanmean(site_ffc_fut.loc['SP_Mag'])
+        np.nanmean(site_ffc_hist.loc['SP_Mag'])
 
-    plt.vlines([ds_tim_hist, sp_tim_hist, wet_tim_hist, fa_tim_hist], ymin=0, ymax= max(rh_fut['seventy_five']), color='navy', alpha=.75)
-    plt.vlines([ds_tim_fut, sp_tim_fut, wet_tim_fut, fa_tim_fut], ymin=0, ymax= max(rh_fut['seventy_five']), color='darkred', alpha=.75)
-    plt.hlines([ds_mag_hist], xmin=ds_tim_fut, xmax=366, color='navy', alpha=.65)
-    plt.hlines([wet_mag_hist], xmin=wet_tim_hist, xmax=sp_tim_hist, color='navy', alpha=.65)
-    plt.hlines([ds_mag_fut], xmin=ds_tim_fut, xmax=366, color='darkred', alpha=.65)
-    plt.hlines([wet_mag_fut], xmin=wet_tim_fut, xmax=sp_tim_fut, color='darkred', alpha=.65)
+        plt.vlines([ds_tim_hist, sp_tim_hist, wet_tim_hist, fa_tim_hist], ymin=0, ymax= max(rh_fut['seventy_five']), color='navy', alpha=.75)
+        plt.vlines([ds_tim_fut, sp_tim_fut, wet_tim_fut, fa_tim_fut], ymin=0, ymax= max(rh_fut['seventy_five']), color='darkred', alpha=.75)
+        plt.hlines([ds_mag_hist], xmin=ds_tim_fut, xmax=366, color='navy', alpha=.65)
+        plt.hlines([wet_mag_hist], xmin=wet_tim_hist, xmax=sp_tim_hist, color='navy', alpha=.65)
+        plt.hlines([ds_mag_fut], xmin=ds_tim_fut, xmax=366, color='darkred', alpha=.65)
+        plt.hlines([wet_mag_fut], xmin=wet_tim_fut, xmax=sp_tim_fut, color='darkred', alpha=.65)
 
-    ax.legend(loc='upper left')
-    # ax.grid(which="major", axis='y')
-    ax.set_ylabel('Flow (cfs)')
-    plt.xticks(month_ticks, month_labels)
-    plt.show()
-    plt.title('Merced River at Lake McClure')
-    import pdb; pdb.set_trace() 
-    # average values across all models
-    # separate values into historic and future
-    # plot rh lines for med, 25/75th. (hist & fut)
-    # overlay critical values: timings and mags. 
+        ax.legend(loc='upper left')
+        # ax.grid(which="major", axis='y')
+        ax.set_ylabel('Flow (cfs)')
+        plt.xticks(month_ticks, month_labels)
+        plt.title('Englebright')
+        plt.show()
+        import pdb; pdb.set_trace() 
+        # average values across all models
+        # separate values into historic and future
+        # plot rh lines for med, 25/75th. (hist & fut)
+        # overlay critical values: timings and mags. 
+    site_hydrograph_plotter(englebright_ffc, englebright_rh)
 
 def define_fill_points(year_type, percent, spmed_y, sp_rocmed_y):
     ws_x = year_type.loc['Wet_Tim_'+percent]
