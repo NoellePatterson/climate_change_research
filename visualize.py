@@ -2,16 +2,28 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+from mpl_toolkits import mplot3d
 import seaborn as sns
 import numpy as np
 from collections import OrderedDict
 # for import of data from seaborn
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+# ssl._create_default_https_context = ssl._create_unverified_context
 
-'''
-Print DRH plots for time series flow data
-'''
+# plot model scenarios
+models = pd.read_csv('data_inputs/model_scenarios_plot.csv')
+T = models['T']
+P = models['P']
+I = models['I']
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+ax.scatter(T, P, I)
+ax.set_xlabel('Temperature')
+ax.set_ylabel('Precipitation Volume')
+ax.set_zlabel('Precipitation Intensity')
+plt.show()
+import pdb; pdb.set_trace()
 
 def plot_drh(drh_data):
     # reorder list so that simulations plot out in a logical order

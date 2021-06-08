@@ -15,7 +15,6 @@ for file in files:
     new_date_col = pd.Series(index=range(len(year)), name='date')
     for index, date in enumerate(day):
         date_string = str(day[index]) + '-' + str(month[index]) + '-' + str(year[index])
-        
         dt_obj = dt.strptime(date_string, '%d-%m-%Y')
         dt_string = dt_obj.strftime('%m/%d/%Y')
         new_date_col[index] = dt_string
