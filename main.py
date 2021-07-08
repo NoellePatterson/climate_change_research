@@ -7,7 +7,7 @@ make_summary_dicts, preprocess_dwr, create_model_tables, combine_image, combine_
 from trends import calc_mk_trend
 from hydrograph import hydrograph, site_hydrograph
 from sensitivity_plots import sens_plots
-from eco_endpoints import eco_endpoints
+from eco_endpoints import eco_endpoints, eco_endpoints_slopeplots
 # from visualize import # plot_drh, plot_rh, line_plots, scatterplot_temp_precip, scatterplot, boxplot, jitterplot
 
 # run with raw flow data from DWR dss files to prepare it for running through the FFC. Files stored in outputs folder. Only run once for new data. 
@@ -25,7 +25,8 @@ for folder in model_folders:
     drh_data, rh_data = import_drh_data(folder)
     for data in rh_data:
         rh_data_all.append(data)
-eco_endpoints = eco_endpoints(ffc_data_all)
+# eco_endpoints = eco_endpoints(ffc_data_all)
+eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
       
 # sens_plots = sens_plots(ffc_data_all, rh_data_all)
 # hydro = site_hydrograph(ffc_data_all, rh_data_all)

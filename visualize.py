@@ -188,7 +188,6 @@ def jitterplot(ffc_data):
     # put data into jitterplot with panels for each metric 
     # output and save
 
-
 def line_plots_temp_precip(ffc_data):
     # gather plots of only one precip range (or temp range)
     p_08 = []
@@ -274,7 +273,6 @@ def scatterplot_temp_precip(ffc_data):
         ax.scatter(contl_x, contl_y, color='black', label='Control DT0DP1')
         ax.set_ylim(-100, 7500) # fall: max 8600 , wet: max 7500 , sp: max 60000 , dry: 700
         ax.set_xlim(-1, 185) # fall: (-1, 60) , wet: (-1, 185) , sp: (50, 350) , dry: (230, 395)
-        
 
         # loop through the precip sims within each temp sim
         for sim_index, sim in enumerate(temp_sim):
