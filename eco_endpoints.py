@@ -9,7 +9,7 @@ def eco_endpoints(ffc_data):
     # define the eco endpoints. 5-95th of control? table of endpoints for each ffm
     for model_index, model in enumerate(ffc_data):
         model['ffc_metrics'] = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
-        if model['gage_id'] == 'SACSMA_T0P0S0E0I0':
+        if model['gage_id'] == 'SACSMA_CTR_T0P0S0E0I0':
             control = ffc_data[model_index]['ffc_metrics']
     metrics = ffc_data[0]['ffc_metrics'].index
     eco_5 = []
@@ -28,52 +28,84 @@ def eco_endpoints(ffc_data):
 
     def eco_endpoints_plot(ffc_data, endpoints):
         fig, ax = plt.subplots()
-        tim_metric = 'FA_Tim'
-        mag_metric = 'FA_Mag'
+        tim_metric = 'Wet_Tim'
+        mag_metric = 'Wet_BFL_Mag_50'
         param = 'Seasonal intensity'
+        season = 'Wet Season eco-exceedance'
         for model in ffc_data:
+            # import pdb; pdb.set_trace()
             plt_color = 'grey'
             colors_dict_temp = {'1':'mistyrose', '2':'lightcoral', '3':'crimson', '4':'firebrick', '5':'darkred'}
             colors_dict_precip = {'-30':'darkred', '-20':'crimson', '-10':'lightcoral', '10':'dodgerblue', '20':'blue', '30':'darkblue'}
-            colors_dict_int = {'1':'mistyrose', '2':'lightcoral', '3':'crimson', '4':'firebrick', '5':'darkred'}
-            for key in enumerate(colors_dict_int):
-                # import pdb; pdb.set_trace()
-                # if model['gage_id'][8] == key[1]: # for temp-based coloring
-                #     plt_color = colors_dict_int[key[1]]
-            
-                if 'S' in model['gage_id'][7:]: # for intensity-based coloring
-                    if re.findall(r'S([0-9.-]*[0-9]+)', model['gage_id'])[0] == key[1]: 
-                        plt_color = colors_dict_int[key[1]]
+            colors_dict_int = {'1':'#D9FFBF', '2':'#85CC6F', '3':'#6AB155', '4':'green', '5':'darkgreen'}
+            # for key in enumerate(colors_dict_int):
+            # import pdb; pdb.set_trace()
+            if model['gage_id'].find('OAT') >= 0: # check if it is an OAT model
+                if model['gage_id'][10] == 'T':
+                    plt_marker = 'o'
+                    plt_color_key = model['gage_id'].split('_')[2][1]
+                    plt_color = colors_dict_temp[plt_color_key]
+                    plt_label = 'temperature'
+                elif model['gage_id'][10] == 'P':
+                    plt_marker = '^'
+                    plt_color_key = re.findall(r'P([0-9.-]*[0-9]+)', model['gage_id'])[0]
+                    plt_color = colors_dict_precip[plt_color_key]
+                    plt_label = 'precipitation'
+                elif model['gage_id'][10] == 'S':
+                    plt_marker = 'p'
+                    plt_color_key = re.findall(r'S([0-9.-]*[0-9]+)', model['gage_id'])[0]
+                    plt_color = colors_dict_int[plt_color_key]
+                    plt_label = 'seasonal intensity'
+                elif model['gage_id'][10] == 'E':
+                    plt_marker = 'X'
+                    plt_color_key = re.findall(r'E([0-9.-]*[0-9]+)', model['gage_id'])[0]
+                    plt_color = colors_dict_int[plt_color_key]
+                    plt_label = 'event intensity'
+                elif model['gage_id'][10] == 'I':
+                    plt_marker = 'd'
+                    plt_color_key = re.findall(r'I([0-9.-]*[0-9]+)', model['gage_id'])[0]
+                    plt_color = colors_dict_int[plt_color_key]
+                    plt_label = 'interannual intensity'
+            elif model['gage_id'].find('EXT') >= 0:
+                plt_marker = 'o'
+                plt_color = 'black'
+                plt_label = 'extreme scenario'
+            elif model['gage_id'].find('MID') >= 0:
+                plt_marker = 'o'
+                plt_color = 'grey'
+                plt_label = 'mid-range scenario'
+            elif model['gage_id'].find('CTR') >= 0:
+                continue
 
-                # start = model['gage_id'].index('P')
-                # result = re.findall(r'P([0-9.-]*[0-9]+)', model['gage_id'][start:]) # for precip mag-based coloring
-                # if result[0] == key[1]: # for precip magnitude-based coloring
-                #     plt_color = colors_dict_precip[key[1]]
             # import pdb; pdb.set_trace()
             x = model['ffc_metrics'].loc[tim_metric]
             y = model['ffc_metrics'].loc[mag_metric]
-            ax.scatter(x, y, color=plt_color, alpha=0.3)
+            # ax.scatter(x, y, color=plt_color, marker = plt_marker, alpha=0.3, label = plt_label)
+            if model['gage_id'] in ('SACSMA_OATT_T5P0S0E0I0', 'SACSMA_OATP_T0P30S0E0I0', 'SACSMA_OATS_T0P0S5E0I0', 'SACSMA_OATE_T0P0S0E5I0',\
+                'SACSMA_OATI_T0P0S0E0I5', 'SACSMA_EXT_T0P30S5E5I5', 'SACSMA_MID_T3.4P3.4I1.7'):
+                ax.scatter(x, y, color=plt_color, marker = plt_marker, alpha=0.5, label = plt_label)
+            else:
+                ax.scatter(x, y, color=plt_color, marker = plt_marker, alpha=0.5)
         
         # add min/max endpoints
-        plt.vlines(endpoints['eco_5'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric], alpha=0.5, linestyles='dashed')
-        plt.vlines(endpoints['eco_95'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric], alpha=0.5, linestyles='dashed')
-        plt.hlines(endpoints['eco_5'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], label='Eco 90% threshold', alpha=0.5, linestyles='dashed')
-        plt.hlines(endpoints['eco_95'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], alpha=0.5, linestyles='dashed')
+        plt.vlines(endpoints['eco_5'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric])
+        plt.vlines(endpoints['eco_95'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric])
+        plt.hlines(endpoints['eco_5'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], label='Eco 90% threshold')
+        plt.hlines(endpoints['eco_95'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric])
 
-        plt.vlines(endpoints['eco_min'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric])
-        plt.vlines(endpoints['eco_max'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric])
-        plt.hlines(endpoints['eco_min'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], label='Eco threshold')
-        plt.hlines(endpoints['eco_max'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric])
+        plt.vlines(endpoints['eco_min'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed')
+        plt.vlines(endpoints['eco_max'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed')
+        plt.hlines(endpoints['eco_min'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], label='Eco threshold', alpha=0.5, linestyles='dashed')
+        plt.hlines(endpoints['eco_max'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], alpha=0.5, linestyles='dashed')
         ax.set_ylabel('Flow (cfs)')
         ax.set_xlabel('Days')
-        plt.title('Fall Pulse '+ param + ' coloring')
-        ax.legend(loc='upper left')
+        plt.title(season)
+        ax.legend(loc='upper center')
+        # plt.xlim([0,350])
         plt.show()
     
-    # plots = eco_endpoints_plot(ffc_data, endpoints)
+    plots = eco_endpoints_plot(ffc_data, endpoints)
     # For each model, determine %exceedance over eco endpoints. (for each metric)
-    # exceedances = pd.DataFrame(data=[[], [], [], [], [], [], [], []], index = ['model_name', 'total_exceedance', 'annual_metrics', 'fall_pulse', 'wet_season', \
-    # 'peak_flows', 'spring_recesstion', 'dry_season'])
     model_name = []
     total_exceedance = []
     annual_metrics = []
@@ -104,8 +136,6 @@ def eco_endpoints(ffc_data):
         dry_season.append(sum([dict['DS_Mag_50'], dict['DS_Mag_90'], dict['DS_Tim'], dict['DS_Dur_WS']]) / 4 * 100)
     data = {'model_name':model_name, 'total_exceedance':total_exceedance, 'annual_metrics':annual_metrics, 'fall_pulse':fall_pulse, \
         'wet_season':wet_season, 'peak_flows':peak_flows, 'spring_recession':spring_recession, 'dry_season':dry_season}
-    # df = pd.DataFrame([total_exceedance, annual_metrics, fall_pulse, wet_season, peak_flows, spring_recession, dry_season], index=model_name), 
-    # columns=['total_exceedance', 'annual_metrics', 'fall_pulse', 'wet_season', 'peak_flows', 'spring_recession', 'dry_season'])
     df = pd.DataFrame(data)
     df = df.sort_values('model_name')
     df.to_csv('Eco_endpoints_summary.csv', index=False)
@@ -116,20 +146,20 @@ def eco_endpoints(ffc_data):
 
 def eco_endpoints_slopeplots(ffc_data):
     # assemble results from OAT models
-    plot_x = [0, 1, 2, 3, 4, 5]
+    plot_x = [0, 1, 2, 3, 4, 5, 6]
     temp_dict = {}
     precip_dict = {}
     interann_dict = {}
     seasonal_dict = {}
     event_dict = {}
-    dt = ['SACSMA_T1P0S0E0I0', 'SACSMA_T2P0S0E0I0', 'SACSMA_T3P0S0E0I0', 'SACSMA_T4P0S0E0I0', 'SACSMA_T5P0S0E0I0']
-    dp = ['SACSMA_T0P-30S0E0I0', 'SACSMA_T0P-20S0E0I0', 'SACSMA_T0P-10S0E0I0', 'SACSMA_T0P10S0E0I0', 'SACSMA_T0P20S0E0I0', 'SACSMA_T0P30S0E0I0']
-    di = ['SACSMA_T0P0S0E0I1', 'SACSMA_T0P0S0E0I2', 'SACSMA_T0P0S0E0I3', 'SACSMA_T0P0S0E0I4', 'SACSMA_T0P0S0E0I5']
-    ds = ['SACSMA_T0P0S1E0I0', 'SACSMA_T0P0S2E0I0', 'SACSMA_T0P0S3E0I0', 'SACSMA_T0P0S4E0I0', 'SACSMA_T0P0S5E0I0']
-    de = ['SACSMA_T0P0S0E1I0', 'SACSMA_T0P0S0E2I0', 'SACSMA_T0P0S0E3I0', 'SACSMA_T0P0S0E4I0', 'SACSMA_T0P0S0E5I0']
+    dt = ['SACSMA_OATT_T1P0S0E0I0', 'SACSMA_OATT_T2P0S0E0I0', 'SACSMA_OATT_T3P0S0E0I0', 'SACSMA_OATT_T4P0S0E0I0', 'SACSMA_OATT_T5P0S0E0I0']
+    dp = ['SACSMA_OATP_T0P-30S0E0I0', 'SACSMA_OATP_T0P-20S0E0I0', 'SACSMA_OATP_T0P-10S0E0I0', 'SACSMA_OATP_T0P10S0E0I0', 'SACSMA_OATP_T0P20S0E0I0', 'SACSMA_OATP_T0P30S0E0I0']
+    di = ['SACSMA_OATI_T0P0S0E0I1', 'SACSMA_OATI_T0P0S0E0I2', 'SACSMA_OATI_T0P0S0E0I3', 'SACSMA_OATI_T0P0S0E0I4', 'SACSMA_OATI_T0P0S0E0I5']
+    ds = ['SACSMA_OATS_T0P0S1E0I0', 'SACSMA_OATS_T0P0S2E0I0', 'SACSMA_OATS_T0P0S3E0I0', 'SACSMA_OATS_T0P0S4E0I0', 'SACSMA_OATS_T0P0S5E0I0']
+    de = ['SACSMA_OATE_T0P0S0E1I0', 'SACSMA_OATE_T0P0S0E2I0', 'SACSMA_OATE_T0P0S0E3I0', 'SACSMA_OATE_T0P0S0E4I0', 'SACSMA_OATE_T0P0S0E5I0']
     for model_index, model in enumerate(ffc_data):
         # import pdb; pdb.set_trace()
-        if model['gage_id'] == 'SACSMA_T0P0S0E0I0':
+        if model['gage_id'] == 'SACSMA_CTR_T0P0S0E0I0':
             control = ffc_data[model_index]['ffc_metrics']
         for temp_model in dt:
             if model['gage_id'] == temp_model:
@@ -152,38 +182,42 @@ def eco_endpoints_slopeplots(ffc_data):
     # create list with vals - mean ffc metric val for each model
     # normalize vals in those lists (of ffc metrics)
     norm_temp_dict = {}
+    norm_interann_dict = {}
+    norm_seasonal_dict = {}
+    norm_event_dict = {}
+    norm_precip_dict = {}
     control = control.apply(pd.to_numeric, errors='coerce')
     control = control.mean(axis=1)
-    for model in temp_dict.keys():
+    for model in precip_dict.keys():
         # import pdb; pdb.set_trace()
-        temp_dict[model] = temp_dict[model].apply(pd.to_numeric, errors='coerce')
-        temp_dict[model] = temp_dict[model].mean(axis=1)
+        precip_dict[model] = precip_dict[model].apply(pd.to_numeric, errors='coerce')
+        precip_dict[model] = precip_dict[model].mean(axis=1)
     metrics = ffc_data[0]['ffc_metrics'].index
     metrics = metrics.drop(['Peak_5', 'Peak_10', 'Peak_Dur_2', 'Peak_Dur_5', 'Peak_Dur_10', 'Peak_Fre_2', 'Peak_Fre_5', 'Peak_Fre_10', 'Std'])
     for metric in metrics:
-        temp_list = []
-        temp_list.append(control[metric])
-        for model in temp_dict.keys():
-            temp_list.append(temp_dict[model][metric])
-        norm_min = min(temp_list)
-        norm_max = max(temp_list)
-        for index, val in enumerate(temp_list):
+        metrics_list = []
+        metrics_list.append(control[metric])
+        for model in precip_dict.keys():
+            metrics_list.append(precip_dict[model][metric])
+        norm_min = min(metrics_list)
+        norm_max = max(metrics_list)
+        for index, val in enumerate(metrics_list):
             val = (val - norm_min)/(norm_max - norm_min)
-            temp_list[index] = val
-        norm_temp_dict[metric] = temp_list
+            metrics_list[index] = val
+        norm_precip_dict[metric] = metrics_list
     # make plot with a scatter line for each metric. Label by OAT model.
     # need a way to flip metrics that tend to descend (eg if control is lowest or highest?)
     
-    for slope in norm_temp_dict:
-        if norm_temp_dict[slope][0] > 0.5:
-            norm_temp_dict[slope].reverse()
+    # for slope in norm_precip_dict:
+        # if norm_precip_dict[slope][0] > 0.5: # works for temp
+        # if norm_precip_dict[slope][0] > 0.5: # works for intensity
+        #     norm_precip_dict[slope].reverse()
     fig, ax = plt.subplots()
     for metric in metrics:
-        y = norm_temp_dict[metric]
+        y = norm_precip_dict[metric]
         ax.plot(plot_x, y, alpha=0.3, linestyle='--', marker='o')
+    plt.title('Normalized change for event precipitation models')
     plt.show()
     import pdb; pdb.set_trace()
-
- 
 
     return()

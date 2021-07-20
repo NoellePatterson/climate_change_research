@@ -10,20 +10,20 @@ from collections import OrderedDict
 import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 
-# plot model scenarios
-models = pd.read_csv('data_inputs/model_scenarios_plot.csv')
-T = models['T']
-P = models['P']
-I = models['I']
+# # plot model scenarios
+# models = pd.read_csv('data_inputs/model_scenarios_plot.csv')
+# T = models['T']
+# P = models['P']
+# I = models['I']
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-ax.scatter(T, P, I)
-ax.set_xlabel('Temperature')
-ax.set_ylabel('Precipitation Volume')
-ax.set_zlabel('Precipitation Intensity')
-plt.show()
-import pdb; pdb.set_trace()
+# fig = plt.figure()
+# ax = fig.add_subplot(projection='3d')
+# ax.scatter(T, P, I)
+# ax.set_xlabel('Temperature')
+# ax.set_ylabel('Precipitation Volume')
+# ax.set_zlabel('Precipitation Intensity')
+# plt.show()
+
 
 def plot_drh(drh_data):
     # reorder list so that simulations plot out in a logical order
@@ -64,14 +64,15 @@ def plot_drh(drh_data):
 def plot_rh(rh_data):
     # reorder list so that simulations plot out in a logical order
     # sim_order = [21, 20, 25, 17, 19, 23, 15, 26, 1, 22, 28, 13, 10, 2, 18, 5, 0, 12, 4, 6, 8, 11, 7, 3, 14, 29, 9, 24, 27, 16]
-    runs = ['run1', 'run14', 'run15', 'run16', 'run17']
+    runs = ['SACSMA_T0P0S0E0I0', 'SACSMA_T0P0S1E0I0', 'SACSMA_T0P0S2E0I0', 'SACSMA_T0P0S3E0I0', 'SACSMA_T0P0S4E0I0', 'SACSMA_T0P0S5E0I0']
     percentiles = [10, 25, 50, 75, 90]
     percentile_keys = ['ten', 'twenty_five', 'fifty', 'seventy_five', 'ninety']
     for run_index, m_run in enumerate(runs):
+        # import pdb; pdb.set_trace()
         current_run = False
-        for index, modal in enumerate(rh_data):
-            if modal['name'] == m_run:
-                current_run = modal
+        for index, model in enumerate(rh_data):
+            if model['name'] == m_run:
+                current_run = model
                 break
         if not current_run:
             raise ValueError('Model run specified does not exist.')
@@ -88,7 +89,7 @@ def plot_rh(rh_data):
                 rh[percentile_keys[index]].append(np.nanpercentile(flow_row, percentile))
         
         plt.rc('ytick', labelsize=5) 
-        plt.subplot(5, 1, run_index+1)
+        plt.subplot(6, 1, run_index+1)
         name = current_run['name']
         # make plot
         plt.title('{}'.format(name), size=9)
@@ -391,60 +392,60 @@ def line_plots(ffc_data):
         fig.savefig('data_outputs/plots/lines/runs10-13_{}.pdf'.format(metric))
     # import pdb; pdb.set_trace()
 
-## Bar plot for MK results, all FF metrics
+# ## Bar plot for MK results, all FF metrics
 
-df = pd.read_csv('data_outputs/All_MK_results_RCP8.5.csv')
-df = df.set_index('Year')
-df = df.drop(['Peak_5', 'Peak_10', 'DS_No_Flow', 'Std'])
-# average results across all sites
-metric_avg = []
-for row in range(len(df)):
-   metric_avg.append(np.nanmean(df.iloc[row]))
-y = metric_avg
-x = df.index
-# Prep gini data for plotting
-gini_85 = [0.865373961,0.63434903,0.970083102,0.376731302,0.70166205,0.420775623,0.358448753,0.527977839,0.547922438,0.867036011,0.87700831,0.886980609,0.985041551,1,0.45567867,0.346814404,0.694182825,0.330193906,0.418282548,0.461495845,0.454847645,0.411634349,0.822160665,0.597783934]
-gini_45 = [0.913573407,0.865373961,0.985041551,0.554570637,0.798891967,0.682548476,0.28199446,0.537950139,0.601108033,0.920221607,0.985041551,0.985041551,1,1,0.466481994,0.311911357,0.797229917,0.466481994,0.413296399,0.530470914,0.341828255,0.306925208,0.870360111,0.675900277]
+# df = pd.read_csv('data_outputs/All_MK_results_RCP8.5.csv')
+# df = df.set_index('Year')
+# df = df.drop(['Peak_5', 'Peak_10', 'DS_No_Flow', 'Std'])
+# # average results across all sites
+# metric_avg = []
+# for row in range(len(df)):
+#    metric_avg.append(np.nanmean(df.iloc[row]))
+# y = metric_avg
+# x = df.index
+# # Prep gini data for plotting
+# gini_85 = [0.865373961,0.63434903,0.970083102,0.376731302,0.70166205,0.420775623,0.358448753,0.527977839,0.547922438,0.867036011,0.87700831,0.886980609,0.985041551,1,0.45567867,0.346814404,0.694182825,0.330193906,0.418282548,0.461495845,0.454847645,0.411634349,0.822160665,0.597783934]
+# gini_45 = [0.913573407,0.865373961,0.985041551,0.554570637,0.798891967,0.682548476,0.28199446,0.537950139,0.601108033,0.920221607,0.985041551,0.985041551,1,1,0.466481994,0.311911357,0.797229917,0.466481994,0.413296399,0.530470914,0.341828255,0.306925208,0.870360111,0.675900277]
 
-def make_gini_stars_rank(gini_nums):
-    gini_stars = []
-    for index in range(len(gini_nums)):
-        if gini_nums[index] < 0.25:
-            gini_stars.append('')
-            continue
-        elif gini_nums[index] < 0.5:
-            gini_stars.append('*')
-            continue
-        elif gini_nums[index] < 0.75:
-            gini_stars.append('**')
-            continue
-        else:
-            gini_stars.append('***')
-    return(gini_stars)
-gini_85_stars = make_gini_stars_rank(gini_85)
-gini_45_stars = make_gini_stars_rank(gini_45)
-# create bar plot
-colors_ls = ['gold', 'gold', 'gold', 'cornflowerblue', 'cornflowerblue','cornflowerblue','cornflowerblue', 'navy', 'navy', 'navy', 'navy', 'navy', 'navy', 'navy',
-'yellowgreen', 'yellowgreen','yellowgreen','yellowgreen','lightcoral','lightcoral','lightcoral','lightcoral','grey','grey']
-bars = plt.bar(x, y,  color = colors_ls, edgecolor='black', linewidth=1)
-plt.axis((None,None,-10,10))
-plt.margins(x=.75)
+# def make_gini_stars_rank(gini_nums):
+#     gini_stars = []
+#     for index in range(len(gini_nums)):
+#         if gini_nums[index] < 0.25:
+#             gini_stars.append('')
+#             continue
+#         elif gini_nums[index] < 0.5:
+#             gini_stars.append('*')
+#             continue
+#         elif gini_nums[index] < 0.75:
+#             gini_stars.append('**')
+#             continue
+#         else:
+#             gini_stars.append('***')
+#     return(gini_stars)
+# gini_85_stars = make_gini_stars_rank(gini_85)
+# gini_45_stars = make_gini_stars_rank(gini_45)
+# # create bar plot
+# colors_ls = ['gold', 'gold', 'gold', 'cornflowerblue', 'cornflowerblue','cornflowerblue','cornflowerblue', 'navy', 'navy', 'navy', 'navy', 'navy', 'navy', 'navy',
+# 'yellowgreen', 'yellowgreen','yellowgreen','yellowgreen','lightcoral','lightcoral','lightcoral','lightcoral','grey','grey']
+# bars = plt.bar(x, y,  color = colors_ls, edgecolor='black', linewidth=1)
+# plt.axis((None,None,-10,10))
+# plt.margins(x=.75)
 
-for index, bar in enumerate(bars):
-    height = bar.get_height()
-    if height >=0:
-        bar_height = height - 0.2
-    elif height < 0: 
-        bar_height = height - .85
-    # import pdb; pdb.set_trace()
-    plt.text(bar.get_x() + bar.get_width()/2., bar_height, gini_85_stars[index],
-        ha='center', va='bottom')
+# for index, bar in enumerate(bars):
+#     height = bar.get_height()
+#     if height >=0:
+#         bar_height = height - 0.2
+#     elif height < 0: 
+#         bar_height = height - .85
+#     # import pdb; pdb.set_trace()
+#     plt.text(bar.get_x() + bar.get_width()/2., bar_height, gini_85_stars[index],
+#         ha='center', va='bottom')
 
-plt.xticks(rotation = 290) 
-plt.xticks(fontsize= 8)
-plt.tight_layout()
-plt.savefig('mk_trends_gini_stars.pdf')
-# import pdb; pdb.set_trace()
-# specify colors (according to ff  comp)
-# title: RCP 8.5/4.5
-# output as png
+# plt.xticks(rotation = 290) 
+# plt.xticks(fontsize= 8)
+# plt.tight_layout()
+# plt.savefig('mk_trends_gini_stars.pdf')
+# # import pdb; pdb.set_trace()
+# # specify colors (according to ff  comp)
+# # title: RCP 8.5/4.5
+# # output as png

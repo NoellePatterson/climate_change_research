@@ -43,16 +43,17 @@ def import_ffc_data_gage_class():
     return ffc_dicts
 
 def import_ffc_data(model_folder):
-    model_name = model_folder.split('/')[2]
-    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv'))
-    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv'))
+    model_name = model_folder.split('/')[3] # the index changes depending on data source
+    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*flow_result.csv'))
+    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name +'/*supplementary_metrics.csv'))
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
+        # import pdb; pdb.set_trace()
         supp_dict = {}
         # supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
         # supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
-        supp_dict['gage_id'] = supp_file.split('/')[3][:-26]
+        supp_dict['gage_id'] = supp_file.split('/')[4][:-26] # index changes depending on data source
         supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
@@ -61,7 +62,7 @@ def import_ffc_data(model_folder):
         gage_dict = {}
         # gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
         # gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
-        gage_dict['gage_id'] = metric_file.split('/')[3][:-23]
+        gage_dict['gage_id'] = metric_file.split('/')[4][:-23]
         # align supplemental metric file with main metric file, and add info to the main gage dict
         for supp_dict in supp_dicts:
             if supp_dict['gage_id'] == gage_dict['gage_id']:
@@ -172,42 +173,38 @@ def summarize_data_no_classes(results_dicts):
     summary_df.to_csv('data_outputs/mk_summary_dwr.csv')
 
 def create_model_tables(ffc_data):
+    # perform calculations separately for rcp 4.5 and rcp 8.5
+    # create list of unique sites in ffc_data list (19 total)
+    sites_list = []
+    for model in ffc_data:
+        if model['gage_id'] in sites_list:
+            continue
+        else:
+            sites_list.append(model['gage_id'])
+    # append all models in ffc_data to respective sites list, after calculating fut-hist difference. 
     metrics_list = ffc_data[0]['ffc_metrics'].index
-    all_hist = pd.DataFrame(columns = metrics_list)
-    all_fut = pd.DataFrame(columns = metrics_list)
-    # add metric por averages to each ffc_data model output
-    for index, model in enumerate(ffc_data):
-        metrics = ffc_data[index]['ffc_metrics']
-        metrics_hist = metrics.iloc[:,0:65] # years 1950-2015
-        metrics_fut = metrics.iloc[:,85:150] # years 2035-2100
-        metric_avg_por = metrics.mean(axis=1)
-
-        all_hist = all_hist.append(metrics_hist.mean(axis=1), ignore_index=True)
-        all_fut = all_fut.append(metrics_fut.mean(axis=1), ignore_index=True)
-    # to summarize all results together
-    output = pd.DataFrame(columns = metrics_list)
+    all_site_models = {}
+    for site in sites_list:
+        all_site_models[site] = []
+        for model in ffc_data:
+            if model['gage_id'] == site:
+                metrics = model['ffc_metrics']
+                metrics_hist = metrics.iloc[:,0:65].mean(axis=1) # years 1950-2015
+                metrics_fut = metrics.iloc[:,85:150].mean(axis=1) # years 2035-2100
+                metrics_diff = metrics_fut - metrics_hist
+                all_site_models[site].append(metrics_diff)
+    # take all calculated diffs from each site and average them together. 
+    for site in all_site_models:
+        # import pdb; pdb.set_trace()
+        np_array = np.array(all_site_models[site])
+        avg = np.nanmean(np_array, axis=0)
+        all_site_models[site] = avg
+    # print results in dict into table, save to csv
+    output = pd.DataFrame(all_site_models, index = metrics_list)
+    output.to_csv('data_outputs/CA_regions_fut_hist_differences.csv')
     import pdb; pdb.set_trace()
-    all_hist = all_hist.mean(axis=0)
-    all_fut = all_fut.mean(axis=0)
-    all_fut.to_csv('all_metrics_future.csv')
-    
 
-
-    # # create final table with avg ffc results for each model
-    # run_names = []
-    # run_numbers = []
-    # output = pd.DataFrame(columns = metrics_list)
-    # for index, model in enumerate(ffc_data):
-    #     output.loc[index] = ffc_data[index]['por_averages']
-    #     run_names.append(ffc_data[index]['gage_id'])
-    #     # import pdb; pdb.set_trace()
-    #     run_numbers.append(int(re.findall(r'\d+', ffc_data[index]['gage_id'])[0]))
-    # output['model_run'] = run_names
-    # output['run_number'] = run_numbers
-    # output = output.sort_values(by = 'run_number')
-    # output.drop('run_number', 1, inplace=True)
-    # output.to_csv('data_outputs/metrics_summary.csv', index=False)
-    # return output
+    return output
 
 def preprocess_dwr():
     files = glob.glob('data_inputs/DWR_data/*')
