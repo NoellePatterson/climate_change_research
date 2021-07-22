@@ -72,25 +72,24 @@ def import_ffc_data(model_folder):
     return ffc_dicts, model_name
 
 def import_drh_data(model_folder):
-    model_name = model_folder.split('/')[2]
-    drh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*drh.csv')
+    model_name = model_folder.split('/')[3] # index changes depending on data source
+    drh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*drh.csv')
     drh_dicts = []
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
         # drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
-        drh_dict['name'] = drh_file.split('/')[3][:-8]
+        drh_dict['name'] = drh_file.split('/')[4][:-8] # index changes depending on data source
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
-
-    rh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*matrix.csv')
+    rh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*matrix.csv')
     rh_dicts = []
     for index, rh_file in enumerate(rh_files):
         rh_dict = {} 
-        rh_dict['name'] = rh_file.split('/')[3][:-23]
+        rh_dict['name'] = rh_file.split('/')[4][:-23] # index changes depending on data source
         # rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
         rh_dict['data'] = pd.read_csv(rh_file, sep=',', index_col=None)
         rh_dicts.append(rh_dict)
-    return drh_dicts, rh_dicts
+    return drh_dicts, rh_dicts, model_name
         
 def make_summary_dicts(ffc_data):
     summary_df = pd.DataFrame(columns = ['gage_id', 'class', 'start_yr', 'end_yr', 'POR_len'])
@@ -174,35 +173,44 @@ def summarize_data_no_classes(results_dicts):
 
 def create_model_tables(ffc_data):
     # perform calculations separately for rcp 4.5 and rcp 8.5
-    # create list of unique sites in ffc_data list (19 total)
-    sites_list = []
+    models_45 = []
+    models_85 = []
     for model in ffc_data:
-        if model['gage_id'] in sites_list:
-            continue
-        else:
-            sites_list.append(model['gage_id'])
-    # append all models in ffc_data to respective sites list, after calculating fut-hist difference. 
-    metrics_list = ffc_data[0]['ffc_metrics'].index
-    all_site_models = {}
-    for site in sites_list:
-        all_site_models[site] = []
-        for model in ffc_data:
-            if model['gage_id'] == site:
-                metrics = model['ffc_metrics']
-                metrics_hist = metrics.iloc[:,0:65].mean(axis=1) # years 1950-2015
-                metrics_fut = metrics.iloc[:,85:150].mean(axis=1) # years 2035-2100
-                metrics_diff = metrics_fut - metrics_hist
-                all_site_models[site].append(metrics_diff)
-    # take all calculated diffs from each site and average them together. 
-    for site in all_site_models:
-        # import pdb; pdb.set_trace()
-        np_array = np.array(all_site_models[site])
-        avg = np.nanmean(np_array, axis=0)
-        all_site_models[site] = avg
-    # print results in dict into table, save to csv
-    output = pd.DataFrame(all_site_models, index = metrics_list)
-    output.to_csv('data_outputs/CA_regions_fut_hist_differences.csv')
-    import pdb; pdb.set_trace()
+        if '85' in model['model_name']:
+            models_85.append(model)
+        elif '45' in model['model_name']:
+            models_45.append(model)
+    
+    def create_table(rcp_models, rcp_id):
+        # create list of unique sites in ffc_data list (19 total)
+        sites_list = []
+        for model in rcp_models:
+            if model['gage_id'] in sites_list:
+                continue
+            else:
+                sites_list.append(model['gage_id'])
+        # append all models in rcp_models to respective sites list, after calculating fut-hist difference. 
+        metrics_list = rcp_models[0]['ffc_metrics'].index
+        all_site_models = {}
+        for site in sites_list:
+            all_site_models[site] = []
+            for model in rcp_models:
+                if model['gage_id'] == site:
+                    metrics = model['ffc_metrics']
+                    metrics_hist = metrics.iloc[:,0:65].mean(axis=1) # years 1950-2015
+                    metrics_fut = metrics.iloc[:,85:150].mean(axis=1) # years 2035-2100
+                    metrics_diff = metrics_fut - metrics_hist
+                    all_site_models[site].append(metrics_diff)
+        # take all calculated diffs from each site and average them together. 
+        for site in all_site_models:
+            np_array = np.array(all_site_models[site])
+            avg = np.nanmean(np_array, axis=0)
+            all_site_models[site] = avg
+        # print results in dict into table, save to csv
+        output = pd.DataFrame(all_site_models, index = metrics_list)
+        output.to_csv('data_outputs/CA_regions_fut_hist_differences_'+rcp_id+'.csv')
+    output = create_table(models_45, 'rcp4.5')
+    output = create_table(models_85, 'rcp8.5')
 
     return output
 

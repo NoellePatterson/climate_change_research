@@ -5,36 +5,62 @@ from functools import reduce
 
 def site_hydrograph(ffc_data, rh_data):
     # narrow down for sites of interest
-    def get_site_data(dataset, search_key, data_key):
+    def get_site_data(dataset, search_key, data_key, rcp):
         macclure = []
         battle = []
         englebright = []
         for site_index, site in enumerate(dataset):
-            # import pdb; pdb.set_trace()
-            if site[search_key] == 'I20____Lake_McClure_Inflow_calsim_and_wytypes':
-                macclure.append(site[data_key])
-            elif site[search_key] == 'I10803_Battle_Creek_Inflow_to_Sacramento_River_calsim':
-                battle.append(site[data_key])
-            elif site[search_key] == '11418000_Englebright_Stern_and_wytypes':
-                englebright.append(site[data_key])
+            if rcp in site['model_name']:
+                if site[search_key] == 'I20____Lake_McClure_Inflow_calsim_and_wytypes':
+                    macclure.append(site[data_key])
+                elif site[search_key] == 'I10803_Battle_Creek_Inflow_to_Sacramento_River_calsim':
+                    battle.append(site[data_key])
+                elif site[search_key] == '11418000_Englebright_Stern_and_wytypes':
+                    englebright.append(site[data_key])
         return(macclure, battle, englebright)
     
-    macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics')
-    macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data')
+    macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics', '85')
+    macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data', '85')
 
-    
-    
-    # start with macclure, then apply to all
     # replace all Nones with row avg, so average across all df's will work
     def site_hydrograph_plotter(site_ffc, site_rh):
-        for model_index, model in enumerate(site_ffc):  
-            site_ffc[model_index] = site_ffc[model_index].replace('None', np.nan)
-            for row in site_ffc[0].index:
-                site_ffc[model_index].loc[row] = site_ffc[model_index].loc[row].fillna(value=np.nanmean(pd.to_numeric(site_ffc[model_index].loc[row])))
-        site_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = site_ffc[0].columns)
+        # take avg of models for hist/fut metrics and for rh
+        
+        metrics_list = site_ffc[0].index
+        all_models_hist = []
+        all_models_fut = []
+        rh_all_models_hist = []
+        rh_all_models_fut = []
         for model in site_ffc:
-            site_ffc_avg = site_ffc_avg.add(model.apply(pd.to_numeric))
-        site_ffc_avg = site_ffc_avg.divide(10)
+            metrics_hist = model.iloc[:,0:65].mean(axis=1) # years 1950-2015
+            metrics_fut = model.iloc[:,85:150].mean(axis=1) # years 2035-2100
+            all_models_hist.append(metrics_hist)
+            all_models_fut.append(metrics_fut)
+        for model in site_rh:
+            rh_all_models_hist.append(model.iloc[:, 0:65]) # 1950-2015
+            rh_all_models_fut.append(model.iloc[:, 85:150]) # 2035-2100
+
+        array_hist = np.array(all_models_hist)
+        avg_hist = np.nanmean(array_hist, axis=0)
+        array_fut = np.array(all_models_fut)
+        avg_fut = np.nanmean(array_fut, axis=0)
+        final_hist_metrics = pd.DataFrame(data=avg_hist, index = metrics_list)
+        final_fut_metrics = pd.DataFrame(data=avg_fut, index = metrics_list)
+        import pdb; pdb.set_trace()
+
+        site_rh_hist = rh_avg.iloc[:, 0:65] # 1950-2015
+        site_rh_fut = rh_avg.iloc[:, 85:150] # 2035-2100
+
+        fut_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = ['values'])
+        for model in all_models_fut:
+            fut_ffc_avg = fut_ffc_avg.add(model.apply(pd.to_numeric))
+        fut_ffc_avg = fut_ffc_avg.divide(10)
+
+        hist_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = site_ffc[0].columns)
+        for model in all_models_hist:
+            hist_ffc_avg = hist_ffc_avg.add(model.apply(pd.to_numeric))
+            import pdb; pdb.set_trace()
+        hist_ffc_avg = hist_ffc_avg.divide(10)
 
         for model_index, model in enumerate(site_rh):  
             site_rh[model_index] = site_rh[model_index].replace('None', np.nan)
@@ -43,8 +69,8 @@ def site_hydrograph(ffc_data, rh_data):
             site_rh_avg = site_rh_avg.add(model.apply(pd.to_numeric))
         site_rh_avg = site_rh_avg.divide(10)   
 
-        site_ffc_hist = site_ffc_avg.iloc[:, 0:65] # 1950-2015
-        site_ffc_fut = site_ffc_avg.iloc[:, 85:150] # 2035-2100
+        site_ffc_hist = hist_ffc_avg.iloc[:, 0:65] # 1950-2015
+        site_ffc_fut = fut_ffc_avg.iloc[:, 85:150] # 2035-2100
         site_rh_hist = site_rh_avg.iloc[:, 0:65] # 1950-2015
         site_rh_fut = site_rh_avg.iloc[:, 85:150] # 2035-2100
 

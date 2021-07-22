@@ -22,18 +22,20 @@ for folder in model_folders:
     # run with FFC outputs (copy and paste from FFC) to combine results files and convert to useable format. Use natural flow class #2-for regional sites
     ffc_data, model_name = import_ffc_data(folder)
     for data in ffc_data:
+        data['model_name'] = model_name
         ffc_data_all.append(data)
-    # drh_data, rh_data = import_drh_data(folder)
-    # for data in rh_data:
-    #     rh_data_all.append(data)
-    
-result = create_model_tables(ffc_data_all)
+    drh_data, rh_data, model_name= import_drh_data(folder)
+    for data in rh_data:
+        data['model_name'] = model_name
+        rh_data_all.append(data)
+
+# result = create_model_tables(ffc_data_all)
 # eco_endpoints = eco_endpoints(ffc_data_all)
 # eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
 # rh_plot = plot_rh(rh_data_all)
       
 # sens_plots = sens_plots(ffc_data_all, rh_data_all)
-# hydro = site_hydrograph(ffc_data_all, rh_data_all)
+hydro = site_hydrograph(ffc_data_all, rh_data_all)
 #     # Use FFC output files to prepare data for plotting 
 #     # drh_data, rh_data = import_drh_data()
 
