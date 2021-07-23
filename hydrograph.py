@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 12.5})
 from functools import reduce
 
 def site_hydrograph(ffc_data, rh_data):
@@ -46,21 +47,6 @@ def site_hydrograph(ffc_data, rh_data):
         avg_fut = np.nanmean(array_fut, axis=0)
         final_hist_metrics = pd.DataFrame(data=avg_hist, index = metrics_list)
         final_fut_metrics = pd.DataFrame(data=avg_fut, index = metrics_list)
-        import pdb; pdb.set_trace()
-
-        site_rh_hist = rh_avg.iloc[:, 0:65] # 1950-2015
-        site_rh_fut = rh_avg.iloc[:, 85:150] # 2035-2100
-
-        fut_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = ['values'])
-        for model in all_models_fut:
-            fut_ffc_avg = fut_ffc_avg.add(model.apply(pd.to_numeric))
-        fut_ffc_avg = fut_ffc_avg.divide(10)
-
-        hist_ffc_avg = pd.DataFrame(0, index=site_ffc[0].index, columns = site_ffc[0].columns)
-        for model in all_models_hist:
-            hist_ffc_avg = hist_ffc_avg.add(model.apply(pd.to_numeric))
-            import pdb; pdb.set_trace()
-        hist_ffc_avg = hist_ffc_avg.divide(10)
 
         for model_index, model in enumerate(site_rh):  
             site_rh[model_index] = site_rh[model_index].replace('None', np.nan)
@@ -69,8 +55,6 @@ def site_hydrograph(ffc_data, rh_data):
             site_rh_avg = site_rh_avg.add(model.apply(pd.to_numeric))
         site_rh_avg = site_rh_avg.divide(10)   
 
-        site_ffc_hist = hist_ffc_avg.iloc[:, 0:65] # 1950-2015
-        site_ffc_fut = fut_ffc_avg.iloc[:, 85:150] # 2035-2100
         site_rh_hist = site_rh_avg.iloc[:, 0:65] # 1950-2015
         site_rh_fut = site_rh_avg.iloc[:, 85:150] # 2035-2100
 
@@ -101,24 +85,23 @@ def site_hydrograph(ffc_data, rh_data):
         ax.plot(rh_fut['fifty'], color = 'darkred', label = "Future (2035-2100)", linewidth=2)
         plt.fill_between(x, rh_fut['twenty_five'], rh_fut['fifty'], color='lightpink', alpha=.5)
         plt.fill_between(x, rh_fut['fifty'], rh_fut['seventy_five'], color='lightpink', alpha=.5)
-
-        # add plot anotations using ffc metrics
         
-        ds_tim_hist = np.nanmean(site_ffc_hist.loc['DS_Tim'])
-        sp_tim_hist = np.nanmean(site_ffc_hist.loc['SP_Tim'])
-        wet_tim_hist = np.nanmean(site_ffc_hist.loc['Wet_Tim'])
-        fa_tim_hist = np.nanmean(site_ffc_hist.loc['FA_Tim'])
-        ds_mag_hist = np.nanmean(site_ffc_hist.loc['DS_Mag_50'])
-        wet_mag_hist = np.nanmean(site_ffc_hist.loc['Wet_BFL_Mag_50'])
+        # add plot anotations using ffc metrics
+        ds_tim_fut = np.nanmean(final_fut_metrics.loc['DS_Tim'])
+        sp_tim_fut = np.nanmean(final_fut_metrics.loc['SP_Tim'])
+        wet_tim_fut = np.nanmean(final_fut_metrics.loc['Wet_Tim'])
+        fa_tim_fut = np.nanmean(final_fut_metrics.loc['FA_Tim'])
+        ds_mag_fut = np.nanmean(final_fut_metrics.loc['DS_Mag_50'])
+        wet_mag_fut = np.nanmean(final_fut_metrics.loc['Wet_BFL_Mag_50'])
 
-        ds_tim_fut = np.nanmean(site_ffc_fut.loc['DS_Tim'])
-        sp_tim_fut = np.nanmean(site_ffc_fut.loc['SP_Tim'])
-        wet_tim_fut = np.nanmean(site_ffc_fut.loc['Wet_Tim'])
-        fa_tim_fut = np.nanmean(site_ffc_fut.loc['FA_Tim'])
-        ds_mag_fut = np.nanmean(site_ffc_fut.loc['DS_Mag_50'])
-        wet_mag_fut = np.nanmean(site_ffc_fut.loc['Wet_BFL_Mag_50'])
-        np.nanmean(site_ffc_fut.loc['SP_Mag'])
-        np.nanmean(site_ffc_hist.loc['SP_Mag'])
+        ds_tim_hist = np.nanmean(final_hist_metrics.loc['DS_Tim'])
+        sp_tim_hist = np.nanmean(final_hist_metrics.loc['SP_Tim'])
+        wet_tim_hist = np.nanmean(final_hist_metrics.loc['Wet_Tim'])
+        fa_tim_hist = np.nanmean(final_hist_metrics.loc['FA_Tim'])
+        ds_mag_hist = np.nanmean(final_hist_metrics.loc['DS_Mag_50'])
+        wet_mag_hist = np.nanmean(final_hist_metrics.loc['Wet_BFL_Mag_50'])
+        # np.nanmean(site_ffc_fut.loc['SP_Mag'])
+        # np.nanmean(site_ffc_hist.loc['SP_Mag'])
 
         plt.vlines([ds_tim_hist, sp_tim_hist, wet_tim_hist, fa_tim_hist], ymin=0, ymax= max(rh_fut['seventy_five']), color='navy', alpha=.75)
         plt.vlines([ds_tim_fut, sp_tim_fut, wet_tim_fut, fa_tim_fut], ymin=0, ymax= max(rh_fut['seventy_five']), color='darkred', alpha=.75)
@@ -131,7 +114,7 @@ def site_hydrograph(ffc_data, rh_data):
         # ax.grid(which="major", axis='y')
         ax.set_ylabel('Flow (cfs)')
         plt.xticks(month_ticks, month_labels)
-        plt.title('Englebright')
+        plt.title('Yuba River below Englebright Dam (Southern)')
         plt.show()
         import pdb; pdb.set_trace() 
         # average values across all models
