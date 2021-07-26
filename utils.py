@@ -180,7 +180,7 @@ def create_model_tables(ffc_data):
             models_85.append(model)
         elif '45' in model['model_name']:
             models_45.append(model)
-    
+
     def create_table(rcp_models, rcp_id):
         # create list of unique sites in ffc_data list (19 total)
         sites_list = []
@@ -193,19 +193,26 @@ def create_model_tables(ffc_data):
         metrics_list = rcp_models[0]['ffc_metrics'].index
         all_site_models = {}
         for site in sites_list:
-            all_site_models[site] = []
+            all_site_models[site] = {}
+            all_site_models[site]['hist'] = []
+            all_site_models[site]['fut'] = []
             for model in rcp_models:
                 if model['gage_id'] == site:
-                    metrics = model['ffc_metrics']
+                    metrics = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
                     metrics_hist = metrics.iloc[:,0:65].mean(axis=1) # years 1950-2015
                     metrics_fut = metrics.iloc[:,85:150].mean(axis=1) # years 2035-2100
-                    metrics_diff = metrics_fut - metrics_hist
-                    all_site_models[site].append(metrics_diff)
-        # take all calculated diffs from each site and average them together. 
+                    all_site_models[site]['hist'].append(metrics_hist)
+                    all_site_models[site]['fut'].append(metrics_fut)
+        # take all historic and future metrics from each site and average them together. 
         for site in all_site_models:
-            np_array = np.array(all_site_models[site])
-            avg = np.nanmean(np_array, axis=0)
-            all_site_models[site] = avg
+            np_array_hist = np.array(all_site_models[site]['hist'])
+            hist_avg = np.nanmean(np_array_hist, axis=0)
+            np_array_fut = np.array(all_site_models[site]['fut'])
+            fut_avg = np.nanmean(np_array_fut, axis=0)
+            diff = fut_avg - hist_avg
+            all_site_models[site] = diff
+            # import pdb; pdb.set_trace()
+        
         # print results in dict into table, save to csv
         output = pd.DataFrame(all_site_models, index = metrics_list)
         output.to_csv('data_outputs/CA_regions_fut_hist_differences_'+rcp_id+'.csv')

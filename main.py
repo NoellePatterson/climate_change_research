@@ -29,7 +29,7 @@ for folder in model_folders:
         data['model_name'] = model_name
         rh_data_all.append(data)
 
-# result = create_model_tables(ffc_data_all)
+result = create_model_tables(ffc_data_all)
 # eco_endpoints = eco_endpoints(ffc_data_all)
 # eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
 # rh_plot = plot_rh(rh_data_all)

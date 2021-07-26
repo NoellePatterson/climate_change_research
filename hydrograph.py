@@ -11,22 +11,22 @@ def site_hydrograph(ffc_data, rh_data):
         battle = []
         englebright = []
         for site_index, site in enumerate(dataset):
+            # error in results having to do with data as string type in upload!!!!
             if rcp in site['model_name']:
                 if site[search_key] == 'I20____Lake_McClure_Inflow_calsim_and_wytypes':
-                    macclure.append(site[data_key])
+                    data = site[data_key].apply(pd.to_numeric, errors='coerce')
+                    macclure.append(data)
                 elif site[search_key] == 'I10803_Battle_Creek_Inflow_to_Sacramento_River_calsim':
-                    battle.append(site[data_key])
+                    data = site[data_key].apply(pd.to_numeric, errors='coerce')
+                    battle.append(data)
                 elif site[search_key] == '11418000_Englebright_Stern_and_wytypes':
-                    englebright.append(site[data_key])
+                    data = site[data_key].apply(pd.to_numeric, errors='coerce')
+                    englebright.append(data)
         return(macclure, battle, englebright)
-    
-    macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics', '85')
-    macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data', '85')
 
     # replace all Nones with row avg, so average across all df's will work
     def site_hydrograph_plotter(site_ffc, site_rh):
         # take avg of models for hist/fut metrics and for rh
-        
         metrics_list = site_ffc[0].index
         all_models_hist = []
         all_models_fut = []
@@ -114,14 +114,22 @@ def site_hydrograph(ffc_data, rh_data):
         # ax.grid(which="major", axis='y')
         ax.set_ylabel('Flow (cfs)')
         plt.xticks(month_ticks, month_labels)
+        # plt.title('Merced River at Lake McClure (Central)')
         plt.title('Yuba River below Englebright Dam (Southern)')
+        # plt.title('Merced River at Lake McClure (Central)')
         plt.show()
         import pdb; pdb.set_trace() 
         # average values across all models
         # separate values into historic and future
         # plot rh lines for med, 25/75th. (hist & fut)
         # overlay critical values: timings and mags. 
+
+    macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics', '85')
+    macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data', '85')
     site_hydrograph_plotter(englebright_ffc, englebright_rh)
+
+
+
 
 def define_fill_points(year_type, percent, spmed_y, sp_rocmed_y):
     ws_x = year_type.loc['Wet_Tim_'+percent]
