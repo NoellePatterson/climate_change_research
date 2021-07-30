@@ -5,7 +5,7 @@ import numpy as np
 from utils import import_ffc_data, import_ffc_data, import_drh_data, make_results_dicts, summarize_data, summarize_data_no_classes, \
 make_summary_dicts, preprocess_dwr, create_model_tables, combine_image, combine_mk_model_stats, gini_index_mk_trends
 from trends import calc_mk_trend
-from hydrograph import hydrograph, site_hydrograph
+from hydrograph import hydrograph, site_hydrograph, merced_models_hydrograph
 from sensitivity_plots import sens_plots
 from eco_endpoints import eco_endpoints, eco_endpoints_slopeplots
 from visualize import plot_rh # plot_drh, line_plots, scatterplot_temp_precip, scatterplot, boxplot, jitterplot
@@ -13,7 +13,7 @@ from visualize import plot_rh # plot_drh, line_plots, scatterplot_temp_precip, s
 # run with raw flow data from DWR dss files to prepare it for running through the FFC. Files stored in outputs folder. Only run once for new data. 
 # data = preprocess_dwr()
 
-model_folders = glob.glob('data_outputs/FFC_results/CA_regional_sites/*')
+model_folders = glob.glob('data_outputs/FFC_results/Merced_models_June2021')
 ffc_data_all = []
 rh_data_all = []
 # test = gini_index_mk_trends()
@@ -29,13 +29,14 @@ for folder in model_folders:
         data['model_name'] = model_name
         rh_data_all.append(data)
 
-result = create_model_tables(ffc_data_all)
+# result = create_model_tables(ffc_data_all)
 # eco_endpoints = eco_endpoints(ffc_data_all)
 # eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
 # rh_plot = plot_rh(rh_data_all)
       
 # sens_plots = sens_plots(ffc_data_all, rh_data_all)
-hydro = site_hydrograph(ffc_data_all, rh_data_all)
+# hydro = site_hydrograph(ffc_data_all, rh_data_all)
+hydro = merced_models_hydrograph(ffc_data_all, rh_data_all)
 #     # Use FFC output files to prepare data for plotting 
 #     # drh_data, rh_data = import_drh_data()
 

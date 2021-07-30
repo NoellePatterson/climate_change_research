@@ -4,6 +4,88 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12.5})
 from functools import reduce
 
+
+def merced_models_hydrograph(ffc_data, rh_data):
+    # Dry yr=2008, avg yr=1955, wet yr=1998
+    ctrl = {}
+    oat_t = {}
+    oat_pwet = {}
+    oat_pdry = {}
+    oat_s = {}
+    oat_e = {}
+    oat_i = {}
+    for model_index, model in enumerate(rh_data):
+        if model['name'] == 'SACSMA_CTR_T0P0S0E0I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            ctrl['rh'] = data
+        elif model['name'] == 'SACSMA_OATT_T5P0S0E0I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_t['rh'] = data
+        elif model['name'] == 'SACSMA_OATP_T0P30S0E0I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_pwet['rh'] = data
+        elif model['name'] == 'SACSMA_OATP_T0P-30S0E0I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_pdry['rh'] = data
+        elif model['name'] == 'SACSMA_OATS_T0P0S5E0I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_s['rh'] = data
+        elif model['name'] == 'SACSMA_OATE_T0P0S0E5I0':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_e['rh'] = data
+        elif model['name'] == 'SACSMA_OATI_T0P0S0E0I5':
+            data = model['data'].apply(pd.to_numeric, errors='coerce')
+            oat_i['rh'] = data
+    for model_index, model in enumerate(ffc_data):
+        if model['gage_id'] == 'SACSMA_CTR_T0P0S0E0I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            ctrl['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATT_T5P0S0E0I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_t['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATP_T0P30S0E0I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_pwet['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATP_T0P-30S0E0I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_pdry['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATS_T0P0S5E0I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_s['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATE_T0P0S0E5I0':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_e['ffc'] = data
+        elif model['gage_id'] == 'SACSMA_OATI_T0P0S0E0I5':
+            data = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
+            oat_i['ffc'] = data
+    # import pdb; pdb.set_trace()
+    # Create plot canvas for dry, avg, wet
+    dry_fig, ax = plt.subplots()
+    def get_plotlines(year, ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i):
+        ctrl_plot = ctrl['rh'][year]
+        oat_t_plot = oat_t['rh'][year]
+        oat_pwet_plot = oat_pwet['rh'][year]
+        oat_pdry_plot = oat_pdry['rh'][year]
+        oat_s_plot = oat_s['rh'][year]
+        oat_e_plot = oat_e['rh'][year]
+        oat_i_plot = oat_i['rh'][year]
+        plot_lines = [ctrl_plot, oat_t_plot, oat_pwet_plot, oat_pdry_plot, oat_s_plot, oat_e_plot, oat_i_plot]
+        return(plot_lines)
+    # dry year = 2008, avg = 1955, wet = 1998
+    plot_lines_dry = get_plotlines('1962', ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i)
+    colors = ['black', 'red', 'blue', 'lightblue', 'green', 'darkorange', 'gold']
+    labels = ['Control', 'Temperature', 'Precipitation - wet', 'Precipitation - dry', 'Seasonal intensity', 'Event intensity', 'Interannual intensity']
+    for index, plot_line in enumerate(plot_lines_dry):
+        ax.plot(plot_line, color=colors[index], label=labels[index], alpha=0.6)
+    plt.legend(fontsize=10)
+    plt.show()
+    # import pdb; pdb.set_trace()
+
+    # plot models (specific years) onto each canvas: cntl and OAT extremes
+    
+    return 
+
+
 def site_hydrograph(ffc_data, rh_data):
     # narrow down for sites of interest
     def get_site_data(dataset, search_key, data_key, rcp):
@@ -116,18 +198,13 @@ def site_hydrograph(ffc_data, rh_data):
         plt.xticks(month_ticks, month_labels)
         # plt.title('Merced River at Lake McClure (Central)')
         plt.title('Yuba River below Englebright Dam (Southern)')
-        # plt.title('Merced River at Lake McClure (Central)')
+        # plt.title('Battle Creek (Northern)')
         plt.show()
         import pdb; pdb.set_trace() 
-        # average values across all models
-        # separate values into historic and future
-        # plot rh lines for med, 25/75th. (hist & fut)
-        # overlay critical values: timings and mags. 
 
     macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics', '85')
     macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data', '85')
     site_hydrograph_plotter(englebright_ffc, englebright_rh)
-
 
 
 
