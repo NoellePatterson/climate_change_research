@@ -7,6 +7,7 @@ from functools import reduce
 
 def merced_models_hydrograph(ffc_data, rh_data):
     # Dry yr=2008, avg yr=1955, wet yr=1998
+    year = '1998'
     ctrl = {}
     oat_t = {}
     oat_pwet = {}
@@ -72,12 +73,21 @@ def merced_models_hydrograph(ffc_data, rh_data):
         plot_lines = [ctrl_plot, oat_t_plot, oat_pwet_plot, oat_pdry_plot, oat_s_plot, oat_e_plot, oat_i_plot]
         return(plot_lines)
     # dry year = 2008, avg = 1955, wet = 1998
-    plot_lines_dry = get_plotlines('1962', ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i)
-    colors = ['black', 'red', 'blue', 'lightblue', 'green', 'darkorange', 'gold']
+    month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
+    month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+    plot_lines = get_plotlines(year, ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i)
+    colors = ['dimgrey', 'red', 'blue', 'lightblue', 'green', 'darkorange', 'gold']
     labels = ['Control', 'Temperature', 'Precipitation - wet', 'Precipitation - dry', 'Seasonal intensity', 'Event intensity', 'Interannual intensity']
-    for index, plot_line in enumerate(plot_lines_dry):
-        ax.plot(plot_line, color=colors[index], label=labels[index], alpha=0.6)
-    plt.legend(fontsize=10)
+    for index, plot_line in enumerate(plot_lines):
+        if colors[index] == 'dimgrey':
+            linewidth = 4
+        else:
+            linewidth = 1
+        ax.plot(plot_line, color=colors[index], label=labels[index], alpha=0.6, linewidth=linewidth)
+    plt.xticks(month_ticks, month_labels)
+    # plt.legend(fontsize=10)
+    plt.title('Wet Year')
+    ax.set_ylabel('Flow (cfs)')
     plt.show()
     # import pdb; pdb.set_trace()
 

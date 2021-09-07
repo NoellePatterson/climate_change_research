@@ -28,7 +28,6 @@ def import_ffc_data_gage_class():
             por_end = int(main_metrics.columns[-1])
             if por_len < 40 or por_end < 2005:
                 continue 
-
             gage_dict = int(metric_file[46:54])
             # create dictionary for each gage named after gage id, with class and metric results inside 
             gage_dict = {}
@@ -43,11 +42,11 @@ def import_ffc_data_gage_class():
     return ffc_dicts
 
 def import_ffc_data(model_folder):
-    model_name = model_folder.split('/')[2] # the index changes depending on data source
-    # main_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*flow_result.csv'))
-    # supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name +'/*supplementary_metrics.csv'))
-    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv'))
-    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv'))
+    model_name = model_folder.split('/')[3] # the index changes depending on data source. 2 for Merced data, 3 for CA regional data
+    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*flow_result.csv'))
+    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name +'/*supplementary_metrics.csv'))
+    # main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv'))
+    # supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv'))
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
@@ -55,7 +54,7 @@ def import_ffc_data(model_folder):
         supp_dict = {}
         # supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
         # supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
-        supp_dict['gage_id'] = supp_file.split('/')[3][:-26] # index changes depending on data source
+        supp_dict['gage_id'] = supp_file.split('/')[4][:-26] # index changes depending on data source. 3 for Merced, 4 for CA regions
         supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
@@ -64,7 +63,7 @@ def import_ffc_data(model_folder):
         gage_dict = {}
         # gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
         # gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
-        gage_dict['gage_id'] = metric_file.split('/')[3][:-23] # index changes depending on data source
+        gage_dict['gage_id'] = metric_file.split('/')[4][:-23] # index changes depending on data source. 3 for Merced, 4 for CA regions
         # align supplemental metric file with main metric file, and add info to the main gage dict
         for supp_dict in supp_dicts:
             if supp_dict['gage_id'] == gage_dict['gage_id']:
@@ -209,14 +208,20 @@ def create_model_tables(ffc_data):
                     all_site_models[site]['hist'].append(metrics_hist)
                     all_site_models[site]['fut'].append(metrics_fut)
         # take all historic and future metrics from each site and average them together. 
+        # for flow-based metrics, compute percent change instead of simple difference
         for site in all_site_models:
             np_array_hist = np.array(all_site_models[site]['hist'])
             hist_avg = np.nanmean(np_array_hist, axis=0)
             np_array_fut = np.array(all_site_models[site]['fut'])
             fut_avg = np.nanmean(np_array_fut, axis=0)
-            diff = fut_avg - hist_avg
-            all_site_models[site] = diff
-            # import pdb; pdb.set_trace()
+            result_list = np.zeros([28,])
+            flow_mag_indices = [0, 3, 4, 7, 8, 9, 16, 20, 21, 24]
+            for index, value in enumerate(hist_avg):
+                if index in flow_mag_indices:
+                    result_list[index] = (fut_avg[index] - hist_avg[index])/hist_avg[index] * 100
+                else:
+                    result_list[index] = fut_avg[index] - hist_avg[index]
+            all_site_models[site] = result_list
         
         # print results in dict into table, save to csv
         output = pd.DataFrame(all_site_models, index = metrics_list)
