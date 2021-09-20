@@ -6,8 +6,8 @@ from functools import reduce
 
 
 def merced_models_hydrograph(ffc_data, rh_data):
-    # Dry yr=2008, avg yr=1955, wet yr=1998
-    year = '1998'
+    # Dry yr=2008, avg yr=1979, wet yr=1998
+    year = '2008'
     ctrl = {}
     oat_t = {}
     oat_pwet = {}
@@ -62,31 +62,35 @@ def merced_models_hydrograph(ffc_data, rh_data):
     # import pdb; pdb.set_trace()
     # Create plot canvas for dry, avg, wet
     dry_fig, ax = plt.subplots()
-    def get_plotlines(year, ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i):
-        ctrl_plot = ctrl['rh'][year]
-        oat_t_plot = oat_t['rh'][year]
-        oat_pwet_plot = oat_pwet['rh'][year]
-        oat_pdry_plot = oat_pdry['rh'][year]
-        oat_s_plot = oat_s['rh'][year]
-        oat_e_plot = oat_e['rh'][year]
-        oat_i_plot = oat_i['rh'][year]
-        plot_lines = [ctrl_plot, oat_t_plot, oat_pwet_plot, oat_pdry_plot, oat_s_plot, oat_e_plot, oat_i_plot]
-        return(plot_lines)
-    # dry year = 2008, avg = 1955, wet = 1998
+    def get_plotlines(year, model):
+        plot_line = model['rh'][year]
+        return(plot_line)
+    def get_plot_points(year, model):
+        x_dry = model['ffc'][year]['DS_Tim']
+        x_sp = model['ffc'][year]['SP_Tim']
+        y_dry = model['rh'][year][x_dry]
+        y_sp = model['rh'][year][x_sp]
+        return(x_dry, x_sp, y_dry, y_sp)
+    # dry year = 2008, avg = 1979, wet = 1998
     month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
     month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
-    plot_lines = get_plotlines(year, ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i)
+    models = [ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i]
     colors = ['dimgrey', 'red', 'blue', 'lightblue', 'green', 'darkorange', 'gold']
     labels = ['Control', 'Temperature', 'Precipitation - wet', 'Precipitation - dry', 'Seasonal intensity', 'Event intensity', 'Interannual intensity']
-    for index, plot_line in enumerate(plot_lines):
+    for index, model in enumerate(models):
+        plot_line = get_plotlines(year, model)
+        x_dry, x_sp, y_dry, y_sp = get_plot_points(year, model)
         if colors[index] == 'dimgrey':
             linewidth = 4
         else:
             linewidth = 1
         ax.plot(plot_line, color=colors[index], label=labels[index], alpha=0.6, linewidth=linewidth)
+        ax.plot(x_dry, y_dry, color=colors[index], marker='^', markersize=6.5, markeredgecolor='black')
+        ax.plot(x_sp, y_sp, color=colors[index], marker='o', markersize=6.5, markeredgecolor='black')
+        # import pdb; pdb.set_trace()
     plt.xticks(month_ticks, month_labels)
-    # plt.legend(fontsize=10)
-    plt.title('Wet Year')
+    plt.legend(fontsize=10)
+    plt.title('Dry Year')
     ax.set_ylabel('Flow (cfs)')
     plt.show()
     # import pdb; pdb.set_trace()
