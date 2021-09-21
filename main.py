@@ -31,13 +31,13 @@ for folder in model_folders:
         rh_data_all.append(data)
 
 # result = create_model_tables(ffc_data_all)
-# eco_endpoints = eco_endpoints(ffc_data_all)
+eco_endpoints = eco_endpoints(ffc_data_all, rh_data_all)
 # eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
 # rh_plot = plot_rh(rh_data_all)
       
 # sens_plots = sens_plots(ffc_data_all, rh_data_all)
 # hydro = site_hydrograph(ffc_data_all, rh_data_all)
-hydro = merced_models_hydrograph(ffc_data_all, rh_data_all)
+# hydro = merced_models_hydrograph(ffc_data_all, rh_data_all)
 #     # Use FFC output files to prepare data for plotting 
 #     # drh_data, rh_data = import_drh_data()
 

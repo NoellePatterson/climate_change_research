@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import copy
 import re
 
-def eco_endpoints(ffc_data):
-    # bring in all the data. 
+def eco_endpoints(ffc_data, rh_data):
     # define the eco endpoints. 5-95th of control? table of endpoints for each ffm
     for model_index, model in enumerate(ffc_data):
         model['ffc_metrics'] = model['ffc_metrics'].apply(pd.to_numeric, errors='coerce')
@@ -24,14 +23,18 @@ def eco_endpoints(ffc_data):
     endpoints = pd.DataFrame(data=[eco_5, eco_95, eco_min, eco_max, metrics], index = ['eco_5', 'eco_95', 'eco_min', 'eco_max', 'metrics'])
     endpoints = endpoints.transpose()
     endpoints = endpoints.set_index(keys='metrics')
-    # Start w plots for mag/tim for each FFM. 
+    # define hydrograph trace to overlay in plot
+    for model_index, model in enumerate(rh_data):
+        if model['name'] == 'SACSMA_CTR_T0P0S0E0I0': 
+            model['data'] = model['data'].apply(pd.to_numeric, errors='coerce')
+            hydrograph_ctrl = model['data']['1979']
 
-    def eco_endpoints_plot(ffc_data, endpoints):
+    def eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl):
         fig, ax = plt.subplots()
-        tim_metric = 'Wet_Tim'
-        mag_metric = 'Wet_BFL_Mag_50'
+        tim_metric = 'FA_Tim'
+        mag_metric = 'FA_Mag'
         param = 'Seasonal intensity'
-        season = 'Wet Season eco-exceedance'
+        season = 'Fall Pulse eco-exceedance'
         for model in ffc_data:
             # import pdb; pdb.set_trace()
             plt_color = 'grey'
@@ -97,14 +100,21 @@ def eco_endpoints(ffc_data):
         plt.vlines(endpoints['eco_max'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed')
         plt.hlines(endpoints['eco_min'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], label='Eco threshold', alpha=0.5, linestyles='dashed')
         plt.hlines(endpoints['eco_max'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], alpha=0.5, linestyles='dashed')
+        # add hydrograph trace over top
+        plt.plot(hydrograph_ctrl, color='goldenrod', linewidth=2)
+        month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
+        month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+        plt.xticks(month_ticks, month_labels)
         ax.set_ylabel('Flow (cfs)')
         ax.set_xlabel('Days')
         plt.title(season)
-        ax.legend(loc='upper center')
-        # plt.xlim([0,350])
+        ax.legend(loc='upper right')
+        plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots
+        # plt.ylim([0,9000])
+        plt.xlim([-5,365])
         plt.show()
     
-    plots = eco_endpoints_plot(ffc_data, endpoints)
+    plots = eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl)
     # For each model, determine %exceedance over eco endpoints. (for each metric)
     model_name = []
     total_exceedance = []
