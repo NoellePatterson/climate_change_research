@@ -394,7 +394,7 @@ def line_plots(ffc_data):
 
 ## Bar plot for MK results, all FF metrics
 
-df = pd.read_csv('data_outputs/All_MK_results_RCP8.5.csv')
+df = pd.read_csv('data_outputs/All_MK_results_RCP4.5.csv')
 df = df.set_index('Year')
 df = df.drop(['Peak_5', 'Peak_10', 'Peak_Dur_2', 'Peak_Dur_5', 'Peak_Dur_10', 'Peak_Fre_2', 'Peak_Fre_5', 'Peak_Fre_10','DS_No_Flow', 'Std'])
 x_labels = ['Magnitude', 'Timing', 'Duration', 'Magnitude 10%', 'Magnitude 50%', 'Timing ', 'Duration ', 'Peak annual Q', ' Magnitude', ' Timing', ' Duration', 'Rate change', 'Magnitude 50% ', 'Magnitude 90%', ' Timing ', ' Duration ', 'Average annual Q', 'CV']
@@ -432,8 +432,8 @@ gini_45_stars = make_gini_stars_rank(gini_45)
 colors_ls = ['gold', 'gold', 'gold', 'cornflowerblue', 'cornflowerblue','cornflowerblue','cornflowerblue', 'navy', 
 'yellowgreen', 'yellowgreen','yellowgreen','yellowgreen','lightcoral','lightcoral','lightcoral','lightcoral','grey','grey']
 bars = plt.bar(x, y,  color = colors_ls, edgecolor='black', linewidth=0)
-plt.axis((None,None,-10,10), fontweight='bold')
-plt.margins(x=.75)
+plt.axis((None,None,-10,10)) 
+# plt.margins(x=.75)
 
 for index, bar in enumerate(bars):
     height = bar.get_height()
@@ -442,12 +442,12 @@ for index, bar in enumerate(bars):
     elif height < 0: 
         bar_height = height - .85
     # import pdb; pdb.set_trace()
-    plt.text(bar.get_x() + bar.get_width()/2., bar_height, gini_85_stars[index],
+    plt.text(bar.get_x() + bar.get_width()/2., bar_height, gini_45_stars[index],
         ha='center', va='bottom')
 
 plt.xticks(rotation = 285, fontweight='bold') 
 plt.xticks(fontsize= 8)
 plt.tight_layout()
-plt.savefig('mk_trends_gini_stars.png', dpi=300)
+plt.savefig('mk_trends_gini_stars45.png', dpi=300)
 # title: RCP 8.5/4.5
 # output as png

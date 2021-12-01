@@ -11,9 +11,8 @@ Calculate Mann-Kendall trends in input flow data processed by the functional flo
 '''
 
 def calc_mk_trend(ffc_data, results_dicts, model_name):
-    print(model_name)
-    # loop through each gage (223 total)
-    for gage_index, gage in enumerate(ffc_data):
+# This func needs substantial reworking with most recent version of ffc_data_all in order to work. 
+    for gage_index, gage in enumerate(ffc_data): # loop through sites in a model
         # create two new columns for output data
         results_dicts[gage_index]['results']['mk_decision'] = np.nan
         results_dicts[gage_index]['results']['sen_slope'] = np.nan
@@ -43,10 +42,11 @@ def calc_mk_trend(ffc_data, results_dicts, model_name):
                         if float(ljung['lb_pvalue']) < 0.05:
                             continue
                         else:
+                            # import pdb; pdb.set_trace()
                             results_dicts[gage_index]['results'].loc[value, 'mk_decision'] = mk_stats.trend
                             # only record slope value if mk result is significant up or down trend
                             if mk_stats.trend != 'no trend':
-                                results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope   
+                                results_dicts[gage_index]['results'].loc[value, 'sen_slope'] = mk_stats.slope  
                                 # correct for an occasional error in which a slope of 0 is considered significant by the MK statistic
                                 if mk_stats.slope == 0:
                                     results_dicts[gage_index]['results'].loc[value, 'mk_decision'] == 'no trend'
@@ -67,7 +67,7 @@ def calc_mk_trend(ffc_data, results_dicts, model_name):
     for index, site in enumerate(results_dicts):
         summary_df[site['gage_id']] = site['results']['mk_decision']
     summary_df.to_csv('data_outputs/mk_summary_'+ model_name +'.csv')
-    return results_dicts
+    return summary_df
 
 def mk_and_ljung(array):
     mk_stats = mk.original_test(array)

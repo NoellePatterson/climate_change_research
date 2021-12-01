@@ -106,7 +106,6 @@ def eco_endpoints(ffc_data, rh_data):
         month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
         plt.xticks(month_ticks, month_labels)
         ax.set_ylabel('Flow (cfs)')
-        ax.set_xlabel('Days')
         plt.title(season)
         ax.legend(loc='upper right')
         plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots

@@ -13,25 +13,29 @@ from visualize import plot_rh # plot_drh, line_plots, scatterplot_temp_precip, s
 # run with raw flow data from DWR dss files to prepare it for running through the FFC. Files stored in outputs folder. Only run once for new data. 
 # data = preprocess_dwr()
 
-model_folders = glob.glob('data_outputs/FFC_results/Merced_models_June2021')
-# model_folders = glob.glob('data_outputs/FFC_results/CA_regional_sites/*')
+# model_folders = glob.glob('data_outputs/FFC_results/Merced_models_June2021')
+model_folders = glob.glob('data_outputs/FFC_results/CA_regional_sites/*')
 ffc_data_all = []
 rh_data_all = []
 # test = gini_index_mk_trends()
 
 for folder in model_folders:
     # run with FFC outputs (copy and paste from FFC) to combine results files and convert to useable format. Use natural flow class #2-for regional sites
+    ffc_data_model = []
     ffc_data, model_name = import_ffc_data(folder)
     for data in ffc_data:
         data['model_name'] = model_name
         ffc_data_all.append(data)
-    drh_data, rh_data, model_name= import_drh_data(folder)
+        ffc_data_model.append(data) # use this one for running MK trends, where you need all sites from one model together
+    drh_data, rh_data, model_name = import_drh_data(folder)
     for data in rh_data:
         data['model_name'] = model_name
         rh_data_all.append(data)
-
+    # import pdb; pdb.set_trace()
+    results_dicts = make_results_dicts(ffc_data)
+    mk_trend = calc_mk_trend(ffc_data_model, results_dicts, model_name) 
 # result = create_model_tables(ffc_data_all)
-eco_endpoints = eco_endpoints(ffc_data_all, rh_data_all)
+# eco_endpoints = eco_endpoints(ffc_data_all, rh_data_all)
 # eco_endpoints_slopeplots = eco_endpoints_slopeplots(ffc_data_all)
 # rh_plot = plot_rh(rh_data_all)
       
@@ -56,8 +60,7 @@ eco_endpoints = eco_endpoints(ffc_data_all, rh_data_all)
 
 #     # Statistical analysis tool using preprocessing outputs from above
 #     # por_info = make_summary_dicts(ffc_data)
-#     results_dicts = make_results_dicts(ffc_data)
-#     mk_trend = calc_mk_trend(ffc_data, results_dicts, model_name) 
+
     
 #     # summary = summarize_data_no_classes(results_dicts)
 #     # summary = create_model_tables(ffc_data)

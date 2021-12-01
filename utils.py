@@ -42,28 +42,24 @@ def import_ffc_data_gage_class():
     return ffc_dicts
 
 def import_ffc_data(model_folder):
-    model_name = model_folder.split('/')[2] # the index changes depending on data source. 2 for Merced data, 3 for CA regional data
-    # main_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*flow_result.csv')) # for regional data
-    # supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name +'/*supplementary_metrics.csv')) # for regional data
-    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv')) # for merced models
-    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv')) # for merced models
+    model_name = model_folder.split('/')[3] # the index changes depending on data source. 2 for Merced data, 3 for CA regional data
+    main_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*flow_result.csv')) # for regional data
+    supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name +'/*supplementary_metrics.csv')) # for regional data
+    # main_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name+'/*flow_result.csv')) # for merced models
+    # supp_metric_files = sorted(glob.glob('data_outputs/FFC_results/'+model_name +'/*supplementary_metrics.csv')) # for merced models
     ffc_dicts = []
     supp_dicts = []
     for supp_file in supp_metric_files:
         # import pdb; pdb.set_trace()
         supp_dict = {}
-        # supp_dict['gage_id'] = supp_file.split('_')[3].split('/')[1]
-        # supp_dict['gage_id'] = supp_file.split('/')[2].split('_')[5]
-        supp_dict['gage_id'] = supp_file.split('/')[3][:-26] # index changes depending on data source. 3 for Merced, 4 for CA regions
+        supp_dict['gage_id'] = supp_file.split('/')[4][:-26] # index changes depending on data source. 3 for Merced, 4 for CA regions
         supp_dict['supp_metrics'] = pd.read_csv(supp_file, sep=',', index_col=0)
         supp_dicts.append(supp_dict)
     for metric_file in main_metric_files:
         main_metrics = pd.read_csv(metric_file, sep=',', index_col=0)
         # create dictionary for each gage named after gage id, with class and metric results inside 
         gage_dict = {}
-        # gage_dict['gage_id'] = metric_file.split('_')[3].split('/')[1]
-        # gage_dict['gage_id'] = metric_file.split('/')[2].split('_')[5]
-        gage_dict['gage_id'] = metric_file.split('/')[3][:-23] # index changes depending on data source. 3 for Merced, 4 for CA regions
+        gage_dict['gage_id'] = metric_file.split('/')[4][:-23] # index changes depending on data source. 3 for Merced, 4 for CA regions
         # align supplemental metric file with main metric file, and add info to the main gage dict
         for supp_dict in supp_dicts:
             if supp_dict['gage_id'] == gage_dict['gage_id']:
@@ -73,22 +69,22 @@ def import_ffc_data(model_folder):
     return ffc_dicts, model_name
 
 def import_drh_data(model_folder):
-    model_name = model_folder.split('/')[2] # the index changes depending on data source. 2 for Merced data, 3 for CA regional data
-    # drh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*drh.csv')
-    drh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*drh.csv')
+    model_name = model_folder.split('/')[3] # the index changes depending on data source. 2 for Merced data, 3 for CA regional data
+    drh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*drh.csv') # for CA regional sites
+    # drh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*drh.csv') # for Merced data
     drh_dicts = []
     for index, drh_file in enumerate(drh_files):
         drh_dict = {}
         # drh_dict['name'] = drh_file.split('_')[3].split('/')[1]
-        drh_dict['name'] = drh_file.split('/')[3][:-8] # index changes depending on data source. 3 for Merced, 4 for CA regions
+        drh_dict['name'] = drh_file.split('/')[4][:-8] # index changes depending on data source. 3 for Merced, 4 for CA regions
         drh_dict['data'] = pd.read_csv(drh_file, sep=',', index_col=0, header=None)
         drh_dicts.append(drh_dict)
-    # rh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*matrix.csv')
-    rh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*matrix.csv')
+    rh_files = glob.glob('data_outputs/FFC_results/CA_regional_sites/'+model_name+'/*matrix.csv') # for CA Regional sites
+    # rh_files = glob.glob('data_outputs/FFC_results/'+model_name+'/*matrix.csv') # for Merced sites
     rh_dicts = []
     for index, rh_file in enumerate(rh_files):
         rh_dict = {} 
-        rh_dict['name'] = rh_file.split('/')[3][:-23] # index changes depending on data source. 3 for Merced, 4 for CA regions
+        rh_dict['name'] = rh_file.split('/')[4][:-23] # index changes depending on data source. 3 for Merced, 4 for CA regions
         # rh_dict['name'] = rh_file.split('_')[3].split('/')[1]
         rh_dict['data'] = pd.read_csv(rh_file, sep=',', index_col=None)
         rh_dicts.append(rh_dict)
