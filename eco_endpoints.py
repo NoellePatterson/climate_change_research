@@ -31,10 +31,10 @@ def eco_endpoints(ffc_data, rh_data):
 
     def eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl):
         fig, ax = plt.subplots()
-        tim_metric = 'FA_Tim'
-        mag_metric = 'FA_Mag'
+        tim_metric = 'DS_Tim' # FA_Tim, SP_Tim, Wet_Tim, 
+        mag_metric = 'DS_Mag_50' # FA_Mag, SP_Mag, Wet_BFL_Mag_50, 
         param = 'Seasonal intensity'
-        season = 'Fall Pulse eco-exceedance'
+        season = 'Dry Season eco-exceedance' # Fall Pulse, Spring Recession, Wet Season, 
         for model in ffc_data:
             # import pdb; pdb.set_trace()
             plt_color = 'grey'
@@ -53,12 +53,12 @@ def eco_endpoints(ffc_data, rh_data):
                     plt_marker = '^'
                     plt_color_key = re.findall(r'P([0-9.-]*[0-9]+)', model['gage_id'])[0]
                     plt_color = colors_dict_precip[plt_color_key]
-                    plt_label = 'precipitation'
+                    plt_label = 'precipitation volume'
                 elif model['gage_id'][10] == 'S':
                     plt_marker = 'p'
                     plt_color_key = re.findall(r'S([0-9.-]*[0-9]+)', model['gage_id'])[0]
                     plt_color = colors_dict_int[plt_color_key]
-                    plt_label = 'seasonal intensity'
+                    plt_label = 'seasonal variability'
                 elif model['gage_id'][10] == 'E':
                     plt_marker = 'X'
                     plt_color_key = re.findall(r'E([0-9.-]*[0-9]+)', model['gage_id'])[0]
@@ -68,7 +68,7 @@ def eco_endpoints(ffc_data, rh_data):
                     plt_marker = 'd'
                     plt_color_key = re.findall(r'I([0-9.-]*[0-9]+)', model['gage_id'])[0]
                     plt_color = colors_dict_int[plt_color_key]
-                    plt_label = 'interannual intensity'
+                    plt_label = 'interannual variability'
             elif model['gage_id'].find('EXT') >= 0:
                 plt_marker = 'o'
                 plt_color = 'black'
@@ -91,26 +91,28 @@ def eco_endpoints(ffc_data, rh_data):
                 ax.scatter(x, y, color=plt_color, marker = plt_marker, alpha=0.5)
         
         # add min/max endpoints
-        plt.vlines(endpoints['eco_5'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric])
-        plt.vlines(endpoints['eco_95'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric])
-        plt.hlines(endpoints['eco_5'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], label='Eco 90% threshold')
-        plt.hlines(endpoints['eco_95'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric])
+        plt.vlines(endpoints['eco_5'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric], color='black')
+        plt.vlines(endpoints['eco_95'][tim_metric], ymin=endpoints['eco_5'][mag_metric], ymax=endpoints['eco_95'][mag_metric], color='black')
+        plt.hlines(endpoints['eco_5'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], label='10-90% control', color='black')
+        plt.hlines(endpoints['eco_95'][mag_metric], xmin=endpoints['eco_5'][tim_metric], xmax=endpoints['eco_95'][tim_metric], color='black')
 
-        plt.vlines(endpoints['eco_min'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed')
-        plt.vlines(endpoints['eco_max'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed')
-        plt.hlines(endpoints['eco_min'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], label='Eco threshold', alpha=0.5, linestyles='dashed')
-        plt.hlines(endpoints['eco_max'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], alpha=0.5, linestyles='dashed')
+        plt.vlines(endpoints['eco_min'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed', color='black')
+        plt.vlines(endpoints['eco_max'][tim_metric], ymin=endpoints['eco_min'][mag_metric], ymax=endpoints['eco_max'][mag_metric], alpha=0.5, linestyles='dashed', color='black')
+        plt.hlines(endpoints['eco_min'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], label='Full range control', alpha=0.5, linestyles='dashed', color='black')
+        plt.hlines(endpoints['eco_max'][mag_metric], xmin=endpoints['eco_min'][tim_metric], xmax=endpoints['eco_max'][tim_metric], alpha=0.5, linestyles='dashed', color='black')
         # add hydrograph trace over top
         plt.plot(hydrograph_ctrl, color='goldenrod', linewidth=2)
         month_ticks = [0,32,60,91,121,152,182,213,244,274,305,335]
         month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
         plt.xticks(month_ticks, month_labels)
+        plt.yticks()
         ax.set_ylabel('Flow (cfs)')
         plt.title(season)
-        ax.legend(loc='upper right')
-        plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots
-        # plt.ylim([0,9000])
-        plt.xlim([-5,365])
+        # ax.legend(loc='upper right') # legend on for Fall Pulse
+        # plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots
+        plt.ylim([-200, 9000]) # -200,120000 for fall pulse, -200,170000 for spring, -200, 15000 for wet
+        plt.xlim([-10,380]) # -10,380 for fall/spring/wet
+        plt.savefig('data_outputs/plots/eco_exceedance/dry.pdf', dpi=1200)
         plt.show()
     
     plots = eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl)

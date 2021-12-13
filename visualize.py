@@ -397,7 +397,8 @@ def line_plots(ffc_data):
 df = pd.read_csv('data_outputs/All_MK_results_RCP4.5.csv')
 df = df.set_index('Year')
 df = df.drop(['Peak_5', 'Peak_10', 'Peak_Dur_2', 'Peak_Dur_5', 'Peak_Dur_10', 'Peak_Fre_2', 'Peak_Fre_5', 'Peak_Fre_10','DS_No_Flow', 'Std'])
-x_labels = ['Magnitude', 'Timing', 'Duration', 'Magnitude 10%', 'Magnitude 50%', 'Timing ', 'Duration ', 'Peak annual Q', ' Magnitude', ' Timing', ' Duration', 'Rate change', 'Magnitude 50% ', 'Magnitude 90%', ' Timing ', ' Duration ', 'Average annual Q', 'CV']
+# matplotlib bar chart will plot bars with same labels together... which is why there are some trailing zeros on labels. 
+x_labels = ['Magnitude', 'Timing', 'Duration', 'Magnitude 10%', 'Magnitude 50%', 'Timing ', 'Duration ', 'Peak annual flow', 'Magnitude ', 'Timing  ', 'Duration  ', 'Rate of change', 'Magnitude 50% ', 'Magnitude 90%', ' Timing', ' Duration', 'Avg. annual flow', 'Coeff. of variation']
 df.index = x_labels
 x = df.index
 # average results across all sites
@@ -408,9 +409,8 @@ y = metric_avg
 
 # Prep gini data for plotting
 # took gini averages across models in spreadsheet, and pasted results here, in decimal form. 
-gini_85 = [0.865373961,0.63434903,0.970083102,0.376731302,0.70166205,0.420775623,0.358448753,0.527977839,0.547922438,0.867036011,0.87700831,0.886980609,0.985041551,1,0.45567867,0.346814404,0.694182825,0.330193906,0.418282548,0.461495845,0.454847645,0.411634349,0.822160665,0.597783934]
-gini_45 = [0.913573407,0.865373961,0.985041551,0.554570637,0.798891967,0.682548476,0.28199446,0.537950139,0.601108033,0.920221607,0.985041551,0.985041551,1,1,0.466481994,0.311911357,0.797229917,0.466481994,0.413296399,0.530470914,0.341828255,0.306925208,0.870360111,0.675900277]
-
+gini_85 = [0.86, 0.63, 0.97, 0.37, 0.70, 0.40, 0.35, 0.55, 0.55, 0.86, 0.87, 0.89, 0.98, 1.00, 0.46, 0.34, 0.69, 0.32, 0.42, 0.45, 0.45, 0.40, 0.82, 0.59]
+gini_45 = [0.91, 0.86, 0.98, 0.58, 0.79, 0.67, 0.30, 0.55, 0.64, 0.92, 0.98, 0.98, 1.00, 1.00, 0.51, 0.31, 0.80, 0.46, 0.40, 0.53, 0.33, 0.30, 0.88, 0.68]
 def make_gini_stars_rank(gini_nums):
     gini_stars = []
     for index in range(len(gini_nums)):
@@ -448,6 +448,7 @@ for index, bar in enumerate(bars):
 plt.xticks(rotation = 285, fontweight='bold') 
 plt.xticks(fontsize= 8)
 plt.tight_layout()
-plt.savefig('mk_trends_gini_stars45.png', dpi=300)
+# import pdb; pdb.set_trace() 
+plt.savefig('mk_trends_gini_stars45.png', format='png', dpi=1200)
 # title: RCP 8.5/4.5
 # output as png

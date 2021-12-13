@@ -7,7 +7,7 @@ from functools import reduce
 
 def merced_models_hydrograph(ffc_data, rh_data):
     # Dry yr=2008, avg yr=1979, wet yr=1998
-    year = '2008'
+    year = '1979'
     ctrl = {}
     oat_t = {}
     oat_pwet = {}
@@ -76,7 +76,7 @@ def merced_models_hydrograph(ffc_data, rh_data):
     month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
     models = [ctrl, oat_t, oat_pwet, oat_pdry, oat_s, oat_e, oat_i]
     colors = ['dimgrey', 'red', 'blue', 'lightblue', 'green', 'darkorange', 'gold']
-    labels = ['Control', 'Temperature', 'Precipitation - wet', 'Precipitation - dry', 'Seasonal intensity', 'Event intensity', 'Interannual intensity']
+    labels = ['Control', 'Temperature', 'Precipitation volume - wet', 'Precipitation volume - dry', 'Seasonal variability', 'Event intensity', 'Interannual variability']
     for index, model in enumerate(models):
         plot_line = get_plotlines(year, model)
         x_dry, x_sp, y_dry, y_sp = get_plot_points(year, model)
@@ -89,14 +89,12 @@ def merced_models_hydrograph(ffc_data, rh_data):
         ax.plot(x_sp, y_sp, color=colors[index], marker='o', markersize=6.5, markeredgecolor='black')
         # import pdb; pdb.set_trace()
     plt.xticks(month_ticks, month_labels)
-    plt.legend(fontsize=10)
-    plt.title('Dry Year')
+    plt.legend(fontsize=9.5)
+    plt.title('Average Year')
     ax.set_ylabel('Flow (cfs)')
+    plt.savefig('data_outputs/plots/model_hydrographs/average_year_1979.pdf', dpi=1200)
     plt.show()
     # import pdb; pdb.set_trace()
-
-    # plot models (specific years) onto each canvas: cntl and OAT extremes
-    
     return 
 
 
@@ -210,17 +208,16 @@ def site_hydrograph(ffc_data, rh_data):
         # ax.grid(which="major", axis='y')
         ax.set_ylabel('Flow (cfs)')
         plt.xticks(month_ticks, month_labels)
-        # plt.title('Merced River at Lake McClure (Central)')
-        plt.title('Yuba River below Englebright Dam (Southern)')
-        # plt.title('Battle Creek (Northern)')
+        # plt.title('Merced River at Lake McClure (Southern)')
+        # plt.title('Yuba River below Englebright Dam (Central)')
+        plt.title('Battle Creek (Northern)')
+        plt.savefig('data_outputs/plots/regional_hist_fut_hydrographs/Battle_regional_hydrograph_rcp85.pdf', format='pdf', dpi=1200)
         plt.show()
-        import pdb; pdb.set_trace() 
+        # import pdb; pdb.set_trace() 
 
     macclure_ffc, battle_ffc, englebright_ffc = get_site_data(ffc_data, 'gage_id', 'ffc_metrics', '85')
     macclure_rh, battle_rh, englebright_rh = get_site_data(rh_data, 'name', 'data', '85')
-    site_hydrograph_plotter(englebright_ffc, englebright_rh)
-
-
+    site_hydrograph_plotter(battle_ffc, battle_rh)
 
 def define_fill_points(year_type, percent, spmed_y, sp_rocmed_y):
     ws_x = year_type.loc['Wet_Tim_'+percent]
