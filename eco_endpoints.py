@@ -31,10 +31,10 @@ def eco_endpoints(ffc_data, rh_data):
 
     def eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl):
         fig, ax = plt.subplots()
-        tim_metric = 'DS_Tim' # FA_Tim, SP_Tim, Wet_Tim, 
-        mag_metric = 'DS_Mag_50' # FA_Mag, SP_Mag, Wet_BFL_Mag_50, 
+        tim_metric = 'FA_Tim' # FA_Tim, SP_Tim, Wet_Tim, DS_Tim
+        mag_metric = 'FA_Mag' # FA_Mag, SP_Mag, Wet_BFL_Mag_50, DS_Mag_50
         param = 'Seasonal intensity'
-        season = 'Dry Season eco-exceedance' # Fall Pulse, Spring Recession, Wet Season, 
+        season = 'Fall Pulse eco-exceedance' # Fall Pulse, Spring Recession, Wet Season, Dry Season eco-exceedance
         for model in ffc_data:
             # import pdb; pdb.set_trace()
             plt_color = 'grey'
@@ -72,11 +72,11 @@ def eco_endpoints(ffc_data, rh_data):
             elif model['gage_id'].find('EXT') >= 0:
                 plt_marker = 'o'
                 plt_color = 'black'
-                plt_label = 'extreme scenario'
+                plt_label = 'extreme end scenarios'
             elif model['gage_id'].find('MID') >= 0:
                 plt_marker = 'o'
                 plt_color = 'grey'
-                plt_label = 'mid-range scenario'
+                plt_label = 'mid-range scenarios'
             elif model['gage_id'].find('CTR') >= 0:
                 continue
 
@@ -108,11 +108,11 @@ def eco_endpoints(ffc_data, rh_data):
         plt.yticks()
         ax.set_ylabel('Flow (cfs)')
         plt.title(season)
-        # ax.legend(loc='upper right') # legend on for Fall Pulse
-        # plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots
-        plt.ylim([-200, 9000]) # -200,120000 for fall pulse, -200,170000 for spring, -200, 15000 for wet
-        plt.xlim([-10,380]) # -10,380 for fall/spring/wet
-        plt.savefig('data_outputs/plots/eco_exceedance/dry.pdf', dpi=1200)
+        ax.legend(loc='upper right') # legend on for Fall Pulse
+        plt.yscale('symlog', linthreshy=10000) # use this for spring and fall plots
+        plt.ylim([-200, 120000]) # -200,120000 for fall pulse, -200,170000 for spring, -200, 15000 for wet, -200, 9000 for dry
+        plt.xlim([-10,380]) # -10,380 for fall/spring/wet/dry
+        plt.savefig('data_outputs/plots/eco_exceedance/fall_pulse.pdf', dpi=1200)
         plt.show()
     
     plots = eco_endpoints_plot(ffc_data, endpoints, hydrograph_ctrl)

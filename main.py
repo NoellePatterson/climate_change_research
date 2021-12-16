@@ -19,7 +19,7 @@ ffc_data_all = []
 rh_data_all = []
 
 for folder in model_folders:
-    # run with FFC outputs (copy and paste from FFC) to combine results files and convert to useable format. Use natural flow class #2-for regional sites
+    # run with FFC outputs (copy and paste from FFC) to combine results files and convert to useable format. Use natural flow class #3-for regional sites
     ffc_data_model = []
     ffc_data, model_name = import_ffc_data(folder)
     for data in ffc_data:

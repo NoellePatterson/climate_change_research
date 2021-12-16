@@ -532,14 +532,3 @@ for(run_number in 1:20){
   # write.csv(merced_stats_orig, "merced_stats_orig.csv")
   # write.csv(merced_stats_final, "merced_stats_final.csv")
 }
-
-# Testing difference amoung model outputs
-path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_outputs/"
-path = "/Users/noellepatterson/apps/Other/Climate_change_research/data_inputs/SAC_SMA_outputs/"
-setwd(path)
-flow1 = read.delim("SACSMA_DT0_DP1_MRC_full_run1.txt")
-flow10 = read.delim("SACSMA_DT0_DP1_MRC_full_run10.txt")
-run1 = read.delim("txtformat_run11/data_37.4688_-119.4688.txt", header=FALSE)
-run10 = read.delim("txtformat_run10/data_37.4688_-119.4688.txt", header=FALSE)
-all.equal(flow1, flow10)
-all.equal(run1, run10)
